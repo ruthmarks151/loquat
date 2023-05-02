@@ -10,7 +10,7 @@ use axum::{
 use sqlx::{postgres::PgRow, Executor, FromRow, PgPool, Row};
 use tower_http::services::{ServeDir, ServeFile};
 
-use loquat_common::models::{FanSeries, FanSize, FanType};
+use loquat_common::models::{fan_series::FanSeries, fan_size::FanSize, fan_type::FanType};
 struct DbFanSeries(FanSeries);
 struct DbFanSize(FanSize);
 
@@ -18,7 +18,11 @@ impl FromRow<'_, PgRow> for DbFanSeries {
     fn from_row(row: &PgRow) -> sqlx::Result<Self> {
         Ok(DbFanSeries(FanSeries {
             id: row.try_get("id")?,
-            fan_type: FanType::from_str(row.try_get("fan_type")?).map_err(|_| sqlx::Error::TypeNotFound { type_name: "fan_type".to_owned() })?,
+            fan_type: FanType::from_str(row.try_get("fan_type")?).map_err(|_| {
+                sqlx::Error::TypeNotFound {
+                    type_name: "fan_type".to_owned(),
+                }
+            })?,
         }))
     }
 }
@@ -45,7 +49,9 @@ async fn get_fan_series(
         .map(|data: DbFanSeries| Json(data.0))
 }
 
-async fn get_fan_serieses(Extension(pool): Extension<PgPool>) -> Result<Json<Vec<FanSeries>>, String> {
+async fn get_fan_serieses(
+    Extension(pool): Extension<PgPool>,
+) -> Result<Json<Vec<FanSeries>>, String> {
     sqlx::query_as("SELECT * FROM fan_series LIMIT 50")
         .fetch_all(&pool)
         .await
