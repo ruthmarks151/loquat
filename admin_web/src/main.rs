@@ -1,24 +1,27 @@
 use gloo_net::http::Request;
-use loquat_common::models::Fan;
+use loquat_common::models::{FanSeries, FanSize};
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 use yew_router::prelude::*;
+
+use gloo_console::log;
+use wasm_bindgen::JsValue;
 
 #[derive(Clone, Routable, PartialEq)]
 enum Route {
     #[at("/")]
     Home,
-    #[at("/fans")]
-    IndexFans,
-    #[at("/fans/:id")]
-    GetFan { id: String },
+    #[at("/fan_series")]
+    IndexFanSerieses,
+    #[at("/fan_series/:id")]
+    GetFanSeries { id: String },
 }
 
 fn switch(routes: Route) -> Html {
     match routes {
         Route::Home => html! { <h1>{ "Hello Frontend" }</h1> },
-        Route::IndexFans => html! { <IndexFans /> },
-        Route::GetFan { id } => html! { <GetFan id={id} /> },
+        Route::IndexFanSerieses => html! { <IndexFans /> },
+        Route::GetFanSeries { id } => html! { <GetFan id={id} /> },
     }
 }
 
@@ -46,12 +49,14 @@ fn get_fan(props: &GetFanProps) -> Html {
     {
         let data = data.clone();
         let fan_id = props.id.clone();
-        let req_url = format!("/api/fans/{}", fan_id);
+        let req_url = format!("/api/fan_series/{}", fan_id);
         use_effect(move || {
             if data.is_none() {
+                let object = JsValue::from(fan_id);
+                log!("Fetching Fan: ", object);
                 spawn_local(async move {
                     let resp = Request::get(req_url.as_str()).send().await.unwrap();
-                    let result: Result<Fan, String> = {
+                    let result: Result<FanSeries, String> = {
                         if !resp.ok() {
                             Err(format!(
                                 "Error fetching data {} ({})",
@@ -79,9 +84,9 @@ fn get_fan(props: &GetFanProps) -> Html {
         Some(Ok(data)) => {
             html! {
                 <div>
-                    <h1>{"Fan Detail"}</h1>
+                    <h1>{"Fan Size Detail"}</h1>
                     {"id: "} {data.id.to_owned()} <br/>
-                    {" Name: "} {data.name.to_owned()}
+                    {"fan_type: "} {data.fan_type.to_string()}
                 </div>
             }
         }
@@ -94,18 +99,18 @@ fn get_fan(props: &GetFanProps) -> Html {
 }
 
 #[function_component(IndexFans)]
-fn get_fan() -> Html {
+fn index_fans() -> Html {
     let data = use_state(|| None);
 
     // Request `/api/hello` once
     {
         let data = data.clone();
-        let req_url = "/api/fans".to_owned();
+        let req_url = "/api/fan_series".to_owned();
         use_effect(move || {
             if data.is_none() {
                 spawn_local(async move {
                     let resp = Request::get(req_url.as_str()).send().await.unwrap();
-                    let result: Result<Vec<Fan>, String> = {
+                    let result: Result<Vec<FanSeries>, String> = {
                         if !resp.ok() {
                             Err(format!(
                                 "Error fetching data {} ({})",
@@ -135,16 +140,13 @@ fn get_fan() -> Html {
                 <div>
                     <h1>{"Fan List"}</h1>
                     <ul>
-                        { data.iter().map(|fan| html! { <li>
-                            <Link<Route> to={Route::GetFan { id: fan.id.clone() }}> {fan.name.clone()}  </Link<Route>>
-
-
-
-
+                        { data.iter().map(|fan| html! {
+                            <li>
+                                <Link<Route> to={Route::GetFanSeries { id: fan.id.clone() }}>
+                                    {fan.id.clone()}
+                                </Link<Route>>
                             </li>
-
-
-                        } ).collect::<Vec<_>>() }
+                          } ).collect::<Vec<_>>() }
                     </ul>
                 </div>
             }
