@@ -9,7 +9,7 @@ use axum::{
 };
 use tower_http::services::{ServeDir, ServeFile};
 
-use loquat_common::Fan;
+use loquat_common::models::Fan;
 
 async fn get_fan(Path(id): Path<String>) -> Json<Fan> {
     let fan = Fan {

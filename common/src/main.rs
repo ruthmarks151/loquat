@@ -1,4 +1,4 @@
-use loquat_common::Fan;
+use loquat_common::models::Fan;
 
 fn main() {
     let _fan = Fan {

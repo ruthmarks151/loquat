@@ -1,6 +1,6 @@
 use gloo_net::http::Request;
 use wasm_bindgen_futures::spawn_local;
-use loquat_common::Fan;
+use loquat_common::models::Fan;
 use yew::prelude::*;
 use yew_router::prelude::*;
 
