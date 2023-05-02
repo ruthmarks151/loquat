@@ -1,6 +1,7 @@
 [build]
 target = "index.html"
-dist = "../server/static"
+dist = "../static"
 
 [[proxy]]
-backend = "/api/"
+rewrite = "/api/"
+backend = "http://localhost:8000/api/"

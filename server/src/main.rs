@@ -14,7 +14,7 @@ use loquat_common::Fan;
 async fn get_fan(Path(id): Path<String>) -> Json<Fan> {
     let fan = Fan {
         id: id,
-        name: "Spinmax 9000".to_string(),
+        name: "Spinmax 3000".to_string(),
     };
     Json(fan)
 }
@@ -27,6 +27,8 @@ async fn handle_error(_err: std::io::Error) -> impl IntoResponse {
 async fn axum(
     #[shuttle_static_folder::StaticFolder] static_folder: PathBuf,
 ) -> shuttle_axum::ShuttleAxum {
+    // In production, serve from the root static folder
+    // In dev, this is empty and the frontend proxies to anything /api to this server
     let serve_dir = get_service(
         ServeDir::new(static_folder.clone())
             .fallback(ServeFile::new(static_folder.join("index.html"))),
