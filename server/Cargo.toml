@@ -13,4 +13,6 @@ axum = "0.6.18"
 shuttle-axum = "0.15.0"
 tokio = "1.28.0"
 shuttle-static-folder = "0.15.0"
+shuttle-shared-db = { version = "0.15.0", features = ["postgres"] }
 tower-http = { version = "0.3.0", features = ["fs"] }
+sqlx = { version = "0.6.2", features = ["runtime-tokio-native-tls", "postgres", "uuid"] }
