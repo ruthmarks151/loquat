@@ -1,7 +1,10 @@
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
+use yew_router::prelude::Link;
 
-use crate::features::fan_series::api::get_fan_series;
+use crate::route::Route;
+
+use super::super::api::get_fan_series;
 
 #[derive(Properties, PartialEq)]
 pub struct ReadFanSeriesPageProps {
@@ -35,8 +38,18 @@ pub fn ReadFanSeriesPage(props: &ReadFanSeriesPageProps) -> Html {
             html! {
                 <div>
                     <h1>{"Fan Size Detail"}</h1>
-                    {"id: "} {data.id.to_owned()} <br/>
-                    {"fan_type: "} {data.fan_type.to_string()}
+                    {"fan_type: "} {data.fan_series.fan_type.to_string()} <br/>
+                    {"id: "} {data.fan_series.id.to_owned()}
+                    <h2>{"Sizes"}</h2>
+                    <ul>
+                        { data.fan_sizes.iter().map(|fan_size| html! {
+                            <li>
+                                <Link<Route> to={Route::GetFanSize { id: fan_size.id.clone() }}>
+                                    {fan_size.id.clone()}{" Diameter: "}{fan_size.diameter.clone()}
+                                </Link<Route>>
+                            </li>
+                          } ).collect::<Vec<_>>() }
+                    </ul>
                 </div>
             }
         }

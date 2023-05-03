@@ -2,7 +2,8 @@ use yew::prelude::*;
 use yew_router::prelude::*;
 
 use loquat_admin_web::{
-    features::fan_series::pages::{index::IndexFanSeriesPage, read::ReadFanSeriesPage},
+    features::fan_series::pages::{IndexFanSeriesPage, ReadFanSeriesPage},
+    features::fan_size::pages::ReadFanSizePage,
     route::Route,
 };
 
@@ -11,6 +12,7 @@ fn switch(routes: Route) -> Html {
         Route::Home => html! { <h1>{ "Hello Frontend" }</h1> },
         Route::IndexFanSerieses => html! { <IndexFanSeriesPage /> },
         Route::GetFanSeries { id } => html! { <ReadFanSeriesPage id={id} /> },
+        Route::GetFanSize { id } => html! { <ReadFanSizePage id={id} /> },
     }
 }
 

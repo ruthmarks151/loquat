@@ -2,7 +2,7 @@ use wasm_bindgen_futures::spawn_local;
 use yew::{function_component, html, use_effect, use_state, Html};
 use yew_router::prelude::Link;
 
-use crate::features::fan_series::api::index_fan_serieses;
+use super::super::api::index_fan_serieses;
 use crate::route::Route;
 
 #[function_component]
