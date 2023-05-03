@@ -1,3 +1,6 @@
+use crate::models::{fan_series::FanSeries, fan_size::FanSize};
+
+use super::TestEvent;
 
 #[derive(Clone, Debug)]
 pub struct S1Standard2010Parameters {}
@@ -23,7 +26,7 @@ impl TestEvent<S1Standard2010Parameters, S1Standard2010Determination> for S1Stan
         "S1-2010"
     }
 
-    fn determinations(&self) -> Vec<S1Standard2010Determination> {
-        self.determinations.to_vec()
-    }
+    // fn determinations(&self) -> Vec<S1Standard2010Determination> {
+    //     self.determinations.to_vec()
+    // }
 }
