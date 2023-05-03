@@ -40,8 +40,6 @@ impl Reducer<FanStore> for FanStoreActions {
 }
 
 pub mod selectors {
-    use std::rc::Rc;
-
     use loquat_common::models::{fan_series::FanSeries, fan_size::FanSize};
 
     use super::FanStore;

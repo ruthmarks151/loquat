@@ -4,7 +4,7 @@ use loquat_common::models::{fan_series::FanSeries, fan_size::FanSize};
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 use yew_router::prelude::Link;
-use yewdux::prelude::{use_selector, use_selector_with_deps, use_store};
+use yewdux::prelude::{use_selector_with_deps, use_store};
 
 use crate::{
     route::Route,
@@ -26,11 +26,11 @@ pub fn ReadFanSeriesPage(props: &ReadFanSeriesPageProps) -> Html {
     let (_state, dispatch) = use_store::<FanStore>();
     let id = props.id.clone();
 
-    let format_id = id.clone().replace("%20", " ");
+    let format_id = id.replace("%20", " ");
     let fan_series_option: Rc<Option<FanSeries>> =
         use_selector_with_deps(select_fan_series_by_id, format_id);
 
-    let fan_series_id = id.clone().replace("%20", " ");
+    let fan_series_id = id.replace("%20", " ");
     let fan_sizes: Rc<Vec<FanSize>> =
         use_selector_with_deps(select_fan_sizes_for_fan_series_id, fan_series_id);
 
@@ -38,7 +38,7 @@ pub fn ReadFanSeriesPage(props: &ReadFanSeriesPageProps) -> Html {
         use_effect(move || {
             spawn_local(async move {
                 let response = get_fan_series(id).await;
-                if let Ok(response_json) = response.clone() {
+                if let Ok(response_json) = response {
                     dispatch.apply(FanStoreActions::InsertFanSeries(response_json.fan_series));
 
                     for fan_size in response_json.fan_sizes {
@@ -67,7 +67,7 @@ pub fn ReadFanSeriesPage(props: &ReadFanSeriesPageProps) -> Html {
                         { fan_sizes.iter().map(|fan_size| html! {
                             <li>
                                 <Link<Route> to={Route::GetFanSize { id: fan_size.id.clone() }}>
-                                    {fan_size.id.clone()}{" Diameter: "}{fan_size.diameter.clone()}
+                                    {fan_size.id.clone()}{" Diameter: "}{fan_size.diameter}
                                 </Link<Route>>
                             </li>
                           } ).collect::<Vec<_>>() }
