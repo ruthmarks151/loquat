@@ -1,4 +1,4 @@
-use std::{path::PathBuf};
+use std::path::PathBuf;
 
 use axum::{
     http::StatusCode,
@@ -6,7 +6,7 @@ use axum::{
     routing::{get, get_service},
     Extension, Router,
 };
-use loquat_server::resources;
+use loquat_server::controllers;
 use sqlx::{Executor, PgPool};
 use tower_http::services::{ServeDir, ServeFile};
 
@@ -32,10 +32,10 @@ async fn axum(
     .handle_error(handle_error);
 
     let router = Router::new()
-        .route("/api/fan_series", get(resources::fan_series::index))
-        .route("/api/fan_series/:id", get(resources::fan_series::get))
-        .route("/api/fan_sizes", get(resources::fan_size::index))
-        .route("/api/fan_sizes/:id", get(resources::fan_size::get))
+        .route("/api/fan_series", get(controllers::fan_series::index))
+        .route("/api/fan_series/:id", get(controllers::fan_series::get))
+        .route("/api/fan_sizes", get(controllers::fan_size::index))
+        .route("/api/fan_sizes/:id", get(controllers::fan_size::get))
         .fallback_service(serve_dir)
         .layer(Extension(pool));
     Ok(router.into())

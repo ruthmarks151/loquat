@@ -1,6 +1,5 @@
 use std::str::FromStr;
 
-use loquat_common::api;
 use loquat_common::models::{fan_series::FanSeries, fan_size::FanSize, fan_type::FanType};
 use sqlx::postgres::PgRow;
 use sqlx::{FromRow, Row};
