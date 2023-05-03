@@ -1,9 +1,9 @@
 use gloo_net::http::Request;
-use loquat_common::api::GetFanSizeResponse;
+use loquat_common::api::fan_size::GetResponse;
 
 const INDEX_REQ_URL: &str = "/api/fan_sizes";
 
-pub async fn get_fan_size(fan_size_id: String) -> Result<GetFanSizeResponse, String> {
+pub async fn get_fan_size(fan_size_id: String) -> Result<GetResponse, String> {
     let req_url = format!("{}/{}", INDEX_REQ_URL, fan_size_id);
     let resp = Request::get(req_url.as_str()).send().await.unwrap();
     if !resp.ok() {
