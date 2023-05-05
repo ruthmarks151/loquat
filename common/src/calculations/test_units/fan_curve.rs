@@ -1,4 +1,4 @@
-use crate::models::test_events::{Interpolable, ScalesTo, ScalesWith};
+use crate::calculations::{Interpolable, ScalesTo, ScalesWith};
 use crate::util::pairwise;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -32,6 +32,12 @@ impl<T> AsRef<Vec<T>> for FanCurve<T> {
         &self.points
     }
 }
+
+// impl <T> AsVe<Vec<T>> for FanCurve<T> {
+//     fn as_ref(&self) -> &Vec<T> {
+//         &self.points
+//     }
+// }
 
 impl<T, OP> ScalesWith<T> for FanCurve<OP>
 where

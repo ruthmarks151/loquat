@@ -1,11 +1,13 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use crate::{
+    calculations::{Interpolable, ScalesWith},
     impl_UnitMath,
-    models::test_events::{Interpolable, ScalesWith},
 };
 
-use super::{airflow::Airflow, fan_diameter::FanDiameter, static_pressure::StaticPressure};
+use super::{
+    fan_diameter::FanDiameter, inlet_airflow::InletAirflow, static_pressure::StaticPressure,
+};
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct FanSpeed(f64);
@@ -23,8 +25,8 @@ impl FanSpeed {
     }
 }
 
-impl ScalesWith<Airflow> for FanSpeed {
-    fn scale(self, &from_airflow: &Airflow, &to_airflow: &Airflow) -> Self {
+impl ScalesWith<InletAirflow> for FanSpeed {
+    fn scale(self, &from_airflow: &InletAirflow, &to_airflow: &InletAirflow) -> Self {
         Self(self.0 * (to_airflow / from_airflow))
     }
 }

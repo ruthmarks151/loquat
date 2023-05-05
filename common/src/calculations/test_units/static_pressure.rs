@@ -1,8 +1,8 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use crate::{impl_UnitMath, models::test_events::ScalesWith};
+use crate::{calculations::ScalesWith, impl_UnitMath};
 
-use super::{airflow::Airflow, fan_diameter::FanDiameter};
+use super::{fan_diameter::FanDiameter, inlet_airflow::InletAirflow};
 
 #[derive(Clone, PartialEq, Debug, PartialOrd)]
 pub struct StaticPressure(f64);
@@ -28,8 +28,8 @@ impl ScalesWith<FanDiameter> for StaticPressure {
     }
 }
 
-impl ScalesWith<Airflow> for StaticPressure {
-    fn scale(self, from_airflow: &Airflow, to_airflow: &Airflow) -> Self {
+impl ScalesWith<InletAirflow> for StaticPressure {
+    fn scale(self, from_airflow: &InletAirflow, to_airflow: &InletAirflow) -> Self {
         Self(self.0 * (*to_airflow / *from_airflow).powi(2))
     }
 }

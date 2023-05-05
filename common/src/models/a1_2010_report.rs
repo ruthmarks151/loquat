@@ -1,16 +1,14 @@
-use crate::models::{fan_series::FanSeries, fan_size::FanSize};
-
-use super::{
-    test_units::{
-        airflow::Airflow, brake_horsepower::BrakeHorsepower, fan_curve::InterpolableFanCurve,
-        fan_diameter::FanDiameter, fan_speed::FanSpeed, static_pressure::StaticPressure,
+use crate::{
+    calculations::{
+        a1_2010::A1Tested,
+        a1_operating_point::A1OperatingPoint,
+        test_units::{
+            brake_horsepower::BrakeHorsepower, fan_curve::FanCurve, fan_diameter::FanDiameter,
+            fan_speed::FanSpeed, inlet_airflow::InletAirflow, static_pressure::StaticPressure,
+        },
     },
-    Interpolable, ScalesTo, ScalesWith,
+    models::{fan_series::FanSeries, fan_size::FanSize},
 };
-use crate::models::test_events::test_units::fan_curve::FanCurve;
-
-pub mod operating_point;
-use operating_point::OperatingPoint;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct A1Standard2010Parameters {
@@ -24,16 +22,22 @@ pub struct A1Standard2010Determination {
     brake_horsepower: f64,
 }
 
-impl InterpolableFanCurve<StaticPressure, OperatingPoint> for FanCurve<OperatingPoint> {}
+#[derive(Clone, Debug)]
+pub struct A1Standard2010Report {
+    fan_size: FanSize,
+    fan_series: FanSeries,
+    parameters: A1Standard2010Parameters,
+    determinations: [A1Standard2010Determination; 10],
+}
 
-impl A1Standard2010TestEvent {
-    fn fan_curve(&self) -> FanCurve<OperatingPoint> {
+impl A1Tested for A1Standard2010Report {
+    fn fan_curve(&self) -> FanCurve<A1OperatingPoint> {
         self.determinations
             .iter()
             .map(|op| {
-                OperatingPoint::new(
+                A1OperatingPoint::new(
                     FanSpeed::from_rpm(self.parameters.rpm),
-                    Airflow::from_cfm(op.cfm),
+                    InletAirflow::from_cfm(op.cfm),
                     StaticPressure::from_inches(op.static_pressure),
                     BrakeHorsepower::from_hp(op.brake_horsepower),
                 )
@@ -41,28 +45,24 @@ impl A1Standard2010TestEvent {
             .collect()
     }
 
-    fn fan_curve_for_size(&self, new_fan_size: &FanSize) -> FanCurve<OperatingPoint> {
-        if new_fan_size.fan_series_id != self.fan_series.id {
-            panic!("Fans cannot be substituted with different fan_series_id");
-        }
-
-        self.fan_curve().clone().scale(
-            &FanDiameter::from_inches(self.fan_size.diameter),
-            &FanDiameter::from_inches(new_fan_size.diameter),
-        )
+    fn fan_diameter(&self) -> FanDiameter {
+        FanDiameter::from_inches(self.fan_size.diameter)
     }
-}
-#[derive(Clone, Debug)]
-pub struct A1Standard2010TestEvent {
-    fan_size: FanSize,
-    fan_series: FanSeries,
-    parameters: A1Standard2010Parameters,
-    determinations: [A1Standard2010Determination; 10],
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::models::{fan_series::FanSeries, fan_size::FanSize, fan_type::FanType};
+    use crate::{
+        calculations::{
+            a1_operating_point::A1OperatingPoint,
+            test_units::{
+                brake_horsepower::BrakeHorsepower, fan_diameter::FanDiameter, fan_speed::FanSpeed,
+                inlet_airflow::InletAirflow, static_pressure::StaticPressure,
+            },
+            MeanErrorSquareComparable,
+        },
+        models::{fan_series::FanSeries, fan_size::FanSize, fan_type::FanType},
+    };
 
     use super::*;
 
@@ -96,7 +96,7 @@ mod tests {
             .unwrap();
 
         let fan_series_id = "SKYPLUME G1-ELLV DMF".to_string();
-        let test_event = A1Standard2010TestEvent {
+        let test_event = A1Standard2010Report {
             fan_size: FanSize {
                 id: "SKYPLUME G1-ELLV-18 DMF-150".to_string(),
                 fan_series_id: fan_series_id.clone(),
@@ -104,7 +104,7 @@ mod tests {
             },
             fan_series: FanSeries {
                 id: fan_series_id.clone(),
-                fan_type: FanType::InducedFlow,
+                fan_type: FanType::Axial,
             },
             parameters: A1Standard2010Parameters { rpm: 1750.0 },
             determinations: test_points,
@@ -112,25 +112,31 @@ mod tests {
 
         // rpm 1750            cfm 1281.0,   static 1.911,  BHP 0.850),
 
-        let op = test_event
-            .fan_curve_for_size(&FanSize {
-                id: "SKYPLUME G1-ELLV-18 DMF-150".to_string(),
-                fan_series_id: fan_series_id,
-                diameter: 18.25,
-            })
-            .scale_to(&Airflow::from_cfm(1281.0))
-            .interpolate(&StaticPressure::from_inches(1.911));
+        let op_res = test_event.operating_point_for(
+            &FanDiameter::from_inches(18.25),
+            &InletAirflow::from_cfm(1281.0),
+            &StaticPressure::from_inches(1.91),
+        );
 
         // let op = find_a1_operating_point(&te, 20.0, 5000.0, 4.0);
         // dbg!(op);
-        assert_eq!(
-            op,
-            Ok(OperatingPoint::new(
+        assert!(op_res.is_ok());
+        if let Ok(point) = op_res {
+            // Ensure mean squared error is less than .1% ^ 2
+            let allowable_percent_error = (0.1_f64 / 100.0).powi(2);
+            let percent_square_error = point.error_from(&A1OperatingPoint::new(
                 FanSpeed::from_rpm(1750.0),
-                Airflow::from_cfm(1281.0),
+                InletAirflow::from_cfm(1281.0),
                 StaticPressure::from_inches(1.911),
                 BrakeHorsepower::from_hp(0.85),
-            ),)
-        );
+            ));
+            println!("Error Amount: {}", percent_square_error);
+            assert!(
+                percent_square_error < allowable_percent_error
+            ); 
+        } else {
+            assert!(op_res.is_ok());
+        }
+        
     }
 }

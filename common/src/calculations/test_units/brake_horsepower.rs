@@ -1,10 +1,12 @@
 use crate::{
+    calculations::{Interpolable, ScalesWith},
     impl_UnitMath,
-    models::test_events::{Interpolable, ScalesWith},
 };
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use super::{airflow::Airflow, fan_diameter::FanDiameter, static_pressure::StaticPressure};
+use super::{
+    fan_diameter::FanDiameter, inlet_airflow::InletAirflow, static_pressure::StaticPressure,
+};
 
 #[derive(Clone, PartialEq, Debug)]
 pub struct BrakeHorsepower(f64);
@@ -30,8 +32,8 @@ impl ScalesWith<FanDiameter> for BrakeHorsepower {
     }
 }
 
-impl ScalesWith<Airflow> for BrakeHorsepower {
-    fn scale(self, &from_airflow: &Airflow, &to_airflow: &Airflow) -> Self {
+impl ScalesWith<InletAirflow> for BrakeHorsepower {
+    fn scale(self, &from_airflow: &InletAirflow, &to_airflow: &InletAirflow) -> Self {
         Self(self.0 * (to_airflow / from_airflow).powi(3))
     }
 }

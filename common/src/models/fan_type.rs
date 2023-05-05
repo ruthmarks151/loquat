@@ -10,8 +10,6 @@ pub enum FanType {
     MixedFlow,
     #[serde(rename = "axial")]
     Axial,
-    #[serde(rename = "induced_flow")]
-    InducedFlow,
 }
 #[derive(Debug, PartialEq, Eq)]
 pub struct ParseFanTypeError;
@@ -24,7 +22,6 @@ impl FromStr for FanType {
             "centrifugal" => Ok(Self::Centrifugal),
             "mixed_flow" => Ok(Self::MixedFlow),
             "axial" => Ok(Self::Axial),
-            "induced_flow" => Ok(Self::InducedFlow),
             _ => Err(ParseFanTypeError),
         }
     }
@@ -36,7 +33,6 @@ impl ToString for FanType {
             Self::Centrifugal => "centrifugal",
             Self::MixedFlow => "mixed_flow",
             Self::Axial => "axial",
-            Self::InducedFlow => "induced_flow",
         }
         .to_string()
     }
