@@ -1,29 +1,28 @@
-use super::{fan_series::FanSeries, fan_size::FanSize};
-
-pub trait TestEvent<Parameters, Determination> {
-    fn standard_id(&self) -> &'static str;
-
-    // fn fan_size(&self) -> &FanSize;
-
-    // fn fan_series(&self) -> &FanSeries;
-
-    // fn determinations(&self) -> Vec<Determination>;
-
-    // fn parameters(&self) -> &Parameters;
+pub trait ScalesWith<Context> {
+    fn scale(self, from: &Context, to: &Context) -> Self;
 }
 
-trait Airflowed {
-    fn cfm(&self) -> f64;
+impl<T: PartialEq + Clone> ScalesWith<T> for T {
+    fn scale(self, from: &T, to: &T) -> Self {
+        if self != *from {
+            panic!("Tried to scale an value to an one of its own type, but not from itself")
+        }
+        (*to).clone()
+    }
 }
 
-trait StaticPressured {
-    fn static_pressure(&self) -> f64;
+pub trait ScalesTo<Context> {
+    fn scale_to(self, to: &Context) -> Self;
 }
-
-trait BrakeHorsepowererd {
-    fn brake_horsepower(&self) -> f64;
+pub trait Interpolable<X>
+where
+    X: Clone,
+    Self: Clone,
+{
+    fn interpolate_between(low: (X, Self), high: (X, Self), target: &X) -> Self;
 }
 
 pub mod a1_2010;
 pub mod a2_2010;
 pub mod s1_2010;
+pub mod test_units;

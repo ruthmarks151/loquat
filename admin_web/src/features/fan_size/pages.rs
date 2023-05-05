@@ -7,7 +7,10 @@ pub mod read {
     use yewdux::prelude::{use_selector_with_deps, use_store};
 
     use super::super::api::get_fan_size;
-    use crate::{route::Route, store::{selectors::select_fan_size_by_id, FanStoreActions, FanStore}};
+    use crate::{
+        route::Route,
+        store::{selectors::select_fan_size_by_id, FanStore, FanStoreActions},
+    };
 
     #[derive(Properties, PartialEq)]
     pub struct ReadFanSizePageProps {

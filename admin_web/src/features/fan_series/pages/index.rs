@@ -4,9 +4,7 @@ use loquat_common::models::fan_series::FanSeries;
 use wasm_bindgen_futures::spawn_local;
 use yew::{function_component, html, use_effect, Html};
 use yew_router::prelude::Link;
-use yewdux::{
-    prelude::{use_selector, use_store},
-};
+use yewdux::prelude::{use_selector, use_store};
 
 use super::super::api::index_fan_serieses;
 use crate::{
