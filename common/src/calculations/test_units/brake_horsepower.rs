@@ -45,8 +45,13 @@ impl Interpolable<StaticPressure> for BrakeHorsepower {
         required_static: &StaticPressure,
     ) -> Self {
         //linear interpolation for horespower
+
+        if &low_pressure > required_static || &high_pressure < required_static {
+            panic!("interpolating out of bounds")
+        }
+
         let interval_fraction =
             (required_static - &low_pressure) / (&high_pressure - &low_pressure);
-        (&low_bhp + &(&high_bhp - &low_bhp)) * interval_fraction
+        &low_bhp + &((&high_bhp - &low_bhp) * interval_fraction)
     }
 }

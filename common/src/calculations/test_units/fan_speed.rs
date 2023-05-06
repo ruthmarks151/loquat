@@ -43,6 +43,10 @@ impl Interpolable<StaticPressure> for FanSpeed {
         (high_static_pressure, high_speed): (StaticPressure, FanSpeed),
         target: &StaticPressure,
     ) -> FanSpeed {
+        if &low_static_pressure > target || &high_static_pressure < target {
+            panic!("interpolating out of bounds")
+        }
+
         let low_rpm = low_speed.rpm();
         let high_rpm = high_speed.rpm();
         //absoulte nonsense interpolation quadratic - just let it be

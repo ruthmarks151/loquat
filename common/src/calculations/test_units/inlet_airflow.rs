@@ -1,4 +1,7 @@
-use crate::{calculations::ScalesWith, impl_UnitMath};
+use crate::{
+    calculations::{Interpolable, ScalesWith},
+    impl_UnitMath,
+};
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use super::fan_diameter::FanDiameter;
@@ -17,7 +20,7 @@ impl InletAirflow {
         InletAirflow(cfm)
     }
 
-    fn cfm(&self) -> f64 {
+    pub fn cfm(&self) -> f64 {
         self.0
     }
 }

@@ -21,7 +21,8 @@ impl MeanErrorSquareComparable for A1OperatingPoint {
         ((&(&self.rpm - &other.rpm) / &other.rpm).powi(2)
             + (&(&self.cfm - &other.cfm) / &other.cfm).powi(2)
             + (&(&self.static_pressure - &other.static_pressure) / &other.static_pressure).powi(2)
-            + (&(&self.brake_horsepower - &other.brake_horsepower) / &other.brake_horsepower).powi(2))
+            + (&(&self.brake_horsepower - &other.brake_horsepower) / &other.brake_horsepower)
+                .powi(2))
             / 4.0
     }
 }
@@ -111,6 +112,12 @@ impl Interpolable<StaticPressure> for A1OperatingPoint {
     ) -> A1OperatingPoint {
         if low_op.cfm != high_op.cfm {
             panic!("Interpolating with non-constant CFMs");
+        }
+
+        if &low_static_pressure > target_static_pressure
+            || &high_static_pressure < target_static_pressure
+        {
+            panic!("interpolating out of bounds")
         }
 
         A1OperatingPoint::new(

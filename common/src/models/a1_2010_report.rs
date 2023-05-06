@@ -1,10 +1,14 @@
 use crate::{
     calculations::{
-        a1_2010::A1Tested,
+        a1_2010::CanFindA1OperatingPoint,
         a1_operating_point::A1OperatingPoint,
         test_units::{
-            brake_horsepower::BrakeHorsepower, fan_curve::FanCurve, fan_diameter::FanDiameter,
-            fan_speed::FanSpeed, inlet_airflow::InletAirflow, static_pressure::StaticPressure,
+            brake_horsepower::BrakeHorsepower,
+            fan_curve::{FanCurve, FanCurveScalesWith},
+            fan_diameter::FanDiameter,
+            fan_speed::FanSpeed,
+            inlet_airflow::InletAirflow,
+            static_pressure::StaticPressure,
         },
     },
     models::{fan_series::FanSeries, fan_size::FanSize},
@@ -12,25 +16,25 @@ use crate::{
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct A1Standard2010Parameters {
-    rpm: f64,
+    pub rpm: f64,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct A1Standard2010Determination {
-    cfm: f64,
-    static_pressure: f64,
-    brake_horsepower: f64,
+    pub cfm: f64,
+    pub static_pressure: f64,
+    pub brake_horsepower: f64,
 }
 
 #[derive(Clone, Debug)]
 pub struct A1Standard2010Report {
-    fan_size: FanSize,
-    fan_series: FanSeries,
-    parameters: A1Standard2010Parameters,
-    determinations: [A1Standard2010Determination; 10],
+    pub fan_size: FanSize,
+    pub fan_series: FanSeries,
+    pub parameters: A1Standard2010Parameters,
+    pub determinations: [A1Standard2010Determination; 10],
 }
 
-impl A1Tested for A1Standard2010Report {
+impl FanCurveScalesWith<FanDiameter, A1OperatingPoint> for A1Standard2010Report {
     fn fan_curve(&self) -> FanCurve<A1OperatingPoint> {
         self.determinations
             .iter()
@@ -45,15 +49,18 @@ impl A1Tested for A1Standard2010Report {
             .collect()
     }
 
-    fn fan_diameter(&self) -> FanDiameter {
+    fn current_value(&self) -> FanDiameter {
         FanDiameter::from_inches(self.fan_size.diameter)
     }
 }
+
+impl CanFindA1OperatingPoint for A1Standard2010Report {}
 
 #[cfg(test)]
 mod tests {
     use crate::{
         calculations::{
+            a1_2010::CanFindA1OperatingPoint,
             a1_operating_point::A1OperatingPoint,
             test_units::{
                 brake_horsepower::BrakeHorsepower, fan_diameter::FanDiameter, fan_speed::FanSpeed,
@@ -70,22 +77,23 @@ mod tests {
     fn it_calculates() {
         // Test
         let raw_dets = [
-            (1823.0, 0.001, 0.723),
-            (1637.0, 0.668, 0.785),
-            (1459.0, 1.326, 0.831),
-            (1281.0, 1.911, 0.850),
-            (1100.0, 2.452, 0.845),
-            (912.0, 2.452, 0.829),
-            (740.0, 3.064, 0.782),
-            (548.0, 3.115, 0.715),
-            (294.0, 3.152, 0.623),
-            (0.0, 3.376, 0.512),
+            // SP   CFM      BHP
+            (0.001, 11077.0, 6.320),
+            (1.184, 9981.0, 6.632),
+            (2.593, 8884.0, 7.243),
+            (3.789, 7749.0, 7.481),
+            (4.608, 6659.0, 7.416),
+            (5.158, 5524.0, 7.079),
+            (5.532, 4436.0, 6.606),
+            (5.795, 3311.0, 6.171),
+            (6.054, 1549.0, 6.419),
+            (6.839, 0.0, 7.204),
         ];
         // raw_dets.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
         let test_points: [A1Standard2010Determination; 10] = raw_dets
             .into_iter()
             .map(
-                |(cfm, static_pressure, brake_horsepower)| A1Standard2010Determination {
+                |(static_pressure, cfm, brake_horsepower)| A1Standard2010Determination {
                     cfm,
                     static_pressure,
                     brake_horsepower,
@@ -100,7 +108,7 @@ mod tests {
             fan_size: FanSize {
                 id: "SKYPLUME G1-ELLV-18 DMF-150".to_string(),
                 fan_series_id: fan_series_id.clone(),
-                diameter: 18.25,
+                diameter: 27.0,
             },
             fan_series: FanSeries {
                 id: fan_series_id.clone(),
@@ -110,33 +118,27 @@ mod tests {
             determinations: test_points,
         };
 
-        // rpm 1750            cfm 1281.0,   static 1.911,  BHP 0.850),
 
-        let op_res = test_event.operating_point_for(
-            &FanDiameter::from_inches(18.25),
-            &InletAirflow::from_cfm(1281.0),
-            &StaticPressure::from_inches(1.91),
+        let op_res = test_event.a1_operating_point_for(
+            &FanDiameter::from_inches(27.0),
+            &InletAirflow::from_cfm(7749.0),
+            &StaticPressure::from_inches(3.789),
         );
 
-        // let op = find_a1_operating_point(&te, 20.0, 5000.0, 4.0);
-        // dbg!(op);
         assert!(op_res.is_ok());
         if let Ok(point) = op_res {
             // Ensure mean squared error is less than .1% ^ 2
             let allowable_percent_error = (0.1_f64 / 100.0).powi(2);
             let percent_square_error = point.error_from(&A1OperatingPoint::new(
                 FanSpeed::from_rpm(1750.0),
-                InletAirflow::from_cfm(1281.0),
-                StaticPressure::from_inches(1.911),
-                BrakeHorsepower::from_hp(0.85),
+                InletAirflow::from_cfm(7749.0),
+                StaticPressure::from_inches(3.789),
+                BrakeHorsepower::from_hp(7.481),
             ));
             println!("Error Amount: {}", percent_square_error);
-            assert!(
-                percent_square_error < allowable_percent_error
-            ); 
+            assert!(percent_square_error < allowable_percent_error);
         } else {
             assert!(op_res.is_ok());
         }
-        
     }
 }

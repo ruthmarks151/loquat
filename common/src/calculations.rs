@@ -1,6 +1,7 @@
 pub mod a1_2010;
 pub mod a1_operating_point;
 pub mod a2_2010;
+pub mod a2_operating_point;
 pub mod s1_2010;
 pub mod test_units;
 

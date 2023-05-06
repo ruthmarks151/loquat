@@ -1,4 +1,4 @@
-
+#[derive(PartialEq, Eq, Clone, Debug)]
 pub struct Nozzle {
-  id: String
+    pub id: String,
 }

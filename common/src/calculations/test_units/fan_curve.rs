@@ -1,6 +1,8 @@
 use crate::calculations::{Interpolable, ScalesTo, ScalesWith};
 use crate::util::pairwise;
 
+use super::fan_diameter::FanDiameter;
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct FanCurve<OperatingPoint> {
     points: Vec<OperatingPoint>,
@@ -72,25 +74,41 @@ where
     fn interpolation_pairs(&self) -> Vec<(X, OP)> {
         let mut ops = self.as_ref().clone();
         ops.sort_by(|a, b| {
-            let sp: &X = a.as_ref();
-            sp.partial_cmp(b.as_ref()).unwrap()
+            let a_x: &X = a.as_ref();
+            a_x.partial_cmp(b.as_ref()).unwrap()
         });
         ops.iter()
             .map(|op| {
-                let sp: &X = op.as_ref();
-                (sp.clone(), op.clone())
+                let x: &X = op.as_ref();
+                (x.clone(), op.clone())
             })
             .collect()
     }
 
     fn interpolate(&self, target: &X) -> Result<OP, String> {
         let bounds = pairwise(self.interpolation_pairs())
-            .find(|(_, (static_pressure, _))| static_pressure >= target);
+            .find(|((low_x, _), (high_x, _))| high_x >= target && low_x <= target);
         //set up variables
         if let Some((store_low, store_high)) = bounds {
             Ok(OP::interpolate_between(store_low, store_high, target))
         } else {
             Err("Out of bounds".to_string())
         }
+    }
+}
+
+pub trait FanCurveScalesWith<Env, OP>
+where
+    FanCurve<OP>: Clone + ScalesWith<Env>,
+    OP: ScalesWith<Env>,
+{
+    fn current_value(&self) -> Env;
+
+    fn fan_curve(&self) -> FanCurve<OP>;
+
+    fn fan_curve_for_value(&self, new_constant: &Env) -> FanCurve<OP> {
+        self.fan_curve()
+            .clone()
+            .scale(&&self.current_value(), new_constant)
     }
 }
