@@ -54,11 +54,11 @@ fn augment(
     let corresponding_a2 = a2.interpolate(sp)?;
 
     Ok(A1A2OperatingPoint {
-        rpm: (a1.as_ref() as &FanSpeed).clone(),
-        inlet: (a1.as_ref() as &InletAirflow).clone(),
+        rpm: *(a1.as_ref() as &FanSpeed),
+        inlet: *(a1.as_ref() as &InletAirflow),
         outlet: *corresponding_a2.as_ref(),
-        static_pressure: (a1.as_ref() as &StaticPressure).clone(),
-        brake_horsepower: (a1.as_ref() as &BrakeHorsepower).clone(),
+        static_pressure: *(a1.as_ref() as &StaticPressure),
+        brake_horsepower: *(a1.as_ref() as &BrakeHorsepower),
     })
 }
 

@@ -1,8 +1,6 @@
 use crate::calculations::{Interpolable, ScalesTo, ScalesWith};
 use crate::util::pairwise;
 
-use super::fan_diameter::FanDiameter;
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct FanCurve<OperatingPoint> {
     points: Vec<OperatingPoint>,
@@ -107,8 +105,6 @@ where
     fn fan_curve(&self) -> FanCurve<OP>;
 
     fn fan_curve_for_value(&self, new_constant: &Env) -> FanCurve<OP> {
-        self.fan_curve()
-            .clone()
-            .scale(&&self.current_value(), new_constant)
+        self.fan_curve().scale(&self.current_value(), new_constant)
     }
 }

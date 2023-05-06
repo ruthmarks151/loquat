@@ -17,11 +17,9 @@ pub struct A2OperatingPoint {
 
 impl MeanErrorSquareComparable for A2OperatingPoint {
     fn error_from(&self, other: &Self) -> f64 {
-        ((&(&self.rpm - &other.rpm) / &other.rpm).powi(2)
-            + (&(&self.cfm - &other.cfm) / &other.cfm).powi(2)
-            + (&(&self.static_pressure - &other.static_pressure) / &other.static_pressure)
-                .powi(2)
-                .powi(2))
+        (self.rpm.error_from(&other.rpm)
+            + self.cfm.error_from(&other.cfm)
+            + self.static_pressure.error_from(&other.static_pressure))
             / 3.0
     }
 }
@@ -109,11 +107,11 @@ impl Interpolable<StaticPressure> for A2OperatingPoint {
         A2OperatingPoint::new(
             low_op.rpm,
             OutletAirflow::interpolate_between(
-                (low_static_pressure.clone(), low_op.cfm),
-                (high_static_pressure.clone(), high_op.cfm),
+                (low_static_pressure, low_op.cfm),
+                (high_static_pressure, high_op.cfm),
                 target_static_pressure,
             ),
-            target_static_pressure.clone(),
+            *target_static_pressure,
         )
     }
 }

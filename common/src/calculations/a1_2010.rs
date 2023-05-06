@@ -2,7 +2,7 @@ use crate::calculations::test_units::{
     fan_curve::FanCurve, fan_curve::InterpolableFanCurve, fan_diameter::FanDiameter,
     inlet_airflow::InletAirflow, static_pressure::StaticPressure,
 };
-use crate::calculations::{ScalesTo, ScalesWith};
+use crate::calculations::ScalesTo;
 
 use super::test_units::fan_curve::FanCurveScalesWith;
 use super::{a1_operating_point::A1OperatingPoint, Interpolable};

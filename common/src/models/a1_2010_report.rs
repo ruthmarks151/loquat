@@ -118,7 +118,6 @@ mod tests {
             determinations: test_points,
         };
 
-
         let op_res = test_event.a1_operating_point_for(
             &FanDiameter::from_inches(27.0),
             &InletAirflow::from_cfm(7749.0),

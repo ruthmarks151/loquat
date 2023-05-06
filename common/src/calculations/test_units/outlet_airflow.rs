@@ -42,7 +42,7 @@ impl Interpolable<StaticPressure> for OutletAirflow {
         }
         // TODO, is this linear?
         let interval_fraction =
-            (required_pressure - &low_pressure) / (&high_pressure - &low_pressure);
-        &low_oaf + &((&high_oaf - &low_oaf) * interval_fraction)
+            (required_pressure - &low_pressure) / (high_pressure - low_pressure);
+        low_oaf + (high_oaf - low_oaf) * interval_fraction
     }
 }

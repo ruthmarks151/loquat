@@ -4,7 +4,7 @@ use crate::{calculations::ScalesWith, impl_UnitMath};
 
 use super::{fan_diameter::FanDiameter, inlet_airflow::InletAirflow};
 
-#[derive(Clone, PartialEq, Debug, PartialOrd)]
+#[derive(Clone, PartialEq, Debug, PartialOrd, Copy)]
 pub struct StaticPressure(f64);
 impl_UnitMath!(StaticPressure);
 

@@ -16,13 +16,22 @@ pub struct A1OperatingPoint {
     brake_horsepower: BrakeHorsepower,
 }
 
+trait OperatingPointOn<T1, T2, T3, T4>
+where
+    Self: Sized,
+    T1: From<Self>,
+    T2: From<Self>,
+    T3: From<Self>,
+    T4: From<Self>,
+{
+}
+
 impl MeanErrorSquareComparable for A1OperatingPoint {
     fn error_from(&self, other: &Self) -> f64 {
-        ((&(&self.rpm - &other.rpm) / &other.rpm).powi(2)
-            + (&(&self.cfm - &other.cfm) / &other.cfm).powi(2)
-            + (&(&self.static_pressure - &other.static_pressure) / &other.static_pressure).powi(2)
-            + (&(&self.brake_horsepower - &other.brake_horsepower) / &other.brake_horsepower)
-                .powi(2))
+        (self.rpm.error_from(&other.rpm)
+            + self.cfm.error_from(&other.cfm)
+            + self.static_pressure.error_from(&other.static_pressure)
+            + self.brake_horsepower.error_from(&other.brake_horsepower))
             / 4.0
     }
 }
@@ -122,12 +131,12 @@ impl Interpolable<StaticPressure> for A1OperatingPoint {
 
         A1OperatingPoint::new(
             FanSpeed::interpolate_between(
-                (low_static_pressure.clone(), low_op.rpm),
-                (high_static_pressure.clone(), high_op.rpm),
+                (low_static_pressure, low_op.rpm),
+                (high_static_pressure, high_op.rpm),
                 target_static_pressure,
             ),
-            low_op.cfm.clone(),
-            target_static_pressure.clone(),
+            low_op.cfm,
+            *target_static_pressure,
             BrakeHorsepower::interpolate_between(
                 (low_static_pressure, low_op.brake_horsepower),
                 (high_static_pressure, high_op.brake_horsepower),

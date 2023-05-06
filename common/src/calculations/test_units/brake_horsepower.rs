@@ -8,7 +8,7 @@ use super::{
     fan_diameter::FanDiameter, inlet_airflow::InletAirflow, static_pressure::StaticPressure,
 };
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Copy)]
 pub struct BrakeHorsepower(f64);
 
 impl BrakeHorsepower {
@@ -50,8 +50,7 @@ impl Interpolable<StaticPressure> for BrakeHorsepower {
             panic!("interpolating out of bounds")
         }
 
-        let interval_fraction =
-            (required_static - &low_pressure) / (&high_pressure - &low_pressure);
-        &low_bhp + &((&high_bhp - &low_bhp) * interval_fraction)
+        let interval_fraction = (required_static - &low_pressure) / (high_pressure - low_pressure);
+        low_bhp + (high_bhp - low_bhp) * interval_fraction
     }
 }

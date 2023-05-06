@@ -1,10 +1,11 @@
+use std::ops::{Div, Sub};
+
 pub mod a1_2010;
 pub mod a1_operating_point;
 pub mod a2_2010;
 pub mod a2_operating_point;
 pub mod s1_2010;
 pub mod test_units;
-
 pub trait ScalesWith<Context> {
     fn scale(self, from: &Context, to: &Context) -> Self;
 }
@@ -31,4 +32,13 @@ where
 
 pub trait MeanErrorSquareComparable {
     fn error_from(&self, other: &Self) -> f64;
+}
+
+impl<T> MeanErrorSquareComparable for T
+where
+    T: Sub<T, Output = T> + Div<T, Output = f64> + Clone, // &T: Sub<Output = impl Div<&T, Output = f64>>,
+{
+    fn error_from(&self, other: &Self) -> f64 {
+        ((self.clone() - other.clone()) / other.clone()).powi(2)
+    }
 }

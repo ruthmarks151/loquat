@@ -6,6 +6,5 @@ where
 {
     let mut tail = i.clone().into_iter();
     tail.next();
-    let zipped = i.into_iter().zip(tail);
-    zipped
+    i.into_iter().zip(tail)
 }

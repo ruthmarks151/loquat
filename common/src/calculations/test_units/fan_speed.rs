@@ -9,7 +9,7 @@ use super::{
     fan_diameter::FanDiameter, inlet_airflow::InletAirflow, static_pressure::StaticPressure,
 };
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Copy)]
 pub struct FanSpeed(f64);
 impl_UnitMath!(FanSpeed);
 
@@ -51,8 +51,8 @@ impl Interpolable<StaticPressure> for FanSpeed {
         let high_rpm = high_speed.rpm();
         //absoulte nonsense interpolation quadratic - just let it be
         let interval = high_rpm - low_rpm;
-        let a = ((&low_static_pressure / low_rpm) - (&high_static_pressure / high_rpm)).inches();
-        let b = ((&high_static_pressure * low_rpm / high_rpm)
+        let a = ((low_static_pressure / low_rpm) - (high_static_pressure / high_rpm)).inches();
+        let b = ((high_static_pressure * low_rpm / high_rpm)
             - (low_static_pressure * high_rpm / low_rpm))
             .inches();
         let c = (target * interval).inches();
