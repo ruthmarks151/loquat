@@ -60,11 +60,10 @@ impl CanFindA1OperatingPoint for A1Standard2010Report {}
 mod tests {
     use crate::{
         calculations::{
-            a1_2010::CanFindA1OperatingPoint,
-            a1_operating_point::A1OperatingPoint,
+            a1_2010::{A1InterpolationPoint, CanFindA1OperatingPoint},
             test_units::{
-                brake_horsepower::BrakeHorsepower, fan_diameter::FanDiameter, fan_speed::FanSpeed,
-                inlet_airflow::InletAirflow, static_pressure::StaticPressure,
+                fan_diameter::FanDiameter, inlet_airflow::InletAirflow, operating_point,
+                static_pressure::StaticPressure,
             },
             MeanErrorSquareComparable,
         },
@@ -128,12 +127,9 @@ mod tests {
         if let Ok(point) = op_res {
             // Ensure mean squared error is less than .1% ^ 2
             let allowable_percent_error = (0.1_f64 / 100.0).powi(2);
-            let percent_square_error = point.error_from(&A1OperatingPoint::new(
-                FanSpeed::from_rpm(1750.0),
-                InletAirflow::from_cfm(7749.0),
-                StaticPressure::from_inches(3.789),
-                BrakeHorsepower::from_hp(7.481),
-            ));
+            let actual_point =
+                A1InterpolationPoint::new(FanSpeed::from_rpm(1750.0), BrakeHorsepower::from_hp(7.481));
+            let percent_square_error = point.error_from(&actual_point);
             println!("Error Amount: {}", percent_square_error);
             assert!(percent_square_error < allowable_percent_error);
         } else {

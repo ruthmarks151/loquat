@@ -1,15 +1,12 @@
 use crate::{
     calculations::{
-        a1_2010::CanFindA1OperatingPoint,
         a1_operating_point::A1OperatingPoint,
         a2_2010::CanProduceA1A2Curve,
         a2_operating_point::A2OperatingPoint,
         test_units::{
-            brake_horsepower::BrakeHorsepower,
             fan_curve::{FanCurve, FanCurveScalesWith},
             fan_diameter::FanDiameter,
             fan_speed::FanSpeed,
-            inlet_airflow::InletAirflow,
             outlet_airflow::OutletAirflow,
             static_pressure::StaticPressure,
         },
@@ -78,15 +75,12 @@ impl CanProduceA1A2Curve for A2Standard2010Report {}
 mod tests {
 
     use crate::{
-        api::{fan_series, fan_size},
         calculations::{
-            a1_operating_point::A1OperatingPoint,
             test_units::{
-                brake_horsepower::BrakeHorsepower, fan_curve::InterpolableFanCurve,
-                fan_diameter::FanDiameter, fan_speed::FanSpeed, inlet_airflow::InletAirflow,
+                fan_curve::InterpolableFanCurve, fan_diameter::FanDiameter,
                 static_pressure::StaticPressure,
             },
-            Interpolable, MeanErrorSquareComparable,
+            Interpolable,
         },
         models::{
             a1_2010_report::{A1Standard2010Determination, A1Standard2010Parameters},
@@ -190,16 +184,12 @@ mod tests {
         };
 
         let a2_curve: FanCurve<A2OperatingPoint> = a2_test_event.fan_curve();
-        let a2_pairs = a2_curve.interpolation_pairs();
-        let interpolated_outlet = (a2_curve
-            .interpolate(&StaticPressure::from_inches(2.593))
-            .unwrap()
-            .as_ref() as &OutletAirflow)
-            .clone();
+        let interpolated_outlet: Result<OutletAirflow, String> =
+            a2_curve.interpolate(&StaticPressure::from_inches(2.593));
 
         assert_eq!(
-            interpolated_outlet,
-            OutletAirflow::from_cfm(12312.747710241465)
+            interpolated_outlet.ok(),
+            Some(OutletAirflow::from_cfm(12312.747710241465))
         );
 
         let pairwise_interpolated_outlet = OutletAirflow::interpolate_between(

@@ -1,5 +1,6 @@
 // Implimentations for
 // use std::ops::{Add, Div, Mul, Neg, Sub};
+// use crate::calculations::MeanErrorSquareComparable;
 
 #[macro_export]
 macro_rules! impl_UnitMath {
@@ -97,6 +98,16 @@ macro_rules! impl_UnitMath {
 
             fn div(self, rhs: Self) -> Self::Output {
                 self.0 / rhs.0
+            }
+        }
+
+        impl MeanErrorSquareComparable for $T {
+            fn error_from(&self, other: &Self) -> f64 {
+                (&(self - other) / other).powi(2)
+            }
+
+            fn error_sum(&self, other: &Self) -> f64 {
+                (&(self - other) / other).powi(2)
             }
         }
     };

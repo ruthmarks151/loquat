@@ -1,7 +1,7 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use crate::{
-    calculations::{Interpolable, ScalesWith},
+    calculations::{Interpolable, MeanErrorSquareComparable, ScalesWith},
     impl_UnitMath,
 };
 
@@ -37,7 +37,7 @@ impl ScalesWith<FanDiameter> for FanSpeed {
     }
 }
 
-impl Interpolable<StaticPressure> for FanSpeed {
+impl Interpolable<StaticPressure, FanSpeed> for FanSpeed {
     fn interpolate_between(
         (low_static_pressure, low_speed): (StaticPressure, FanSpeed),
         (high_static_pressure, high_speed): (StaticPressure, FanSpeed),

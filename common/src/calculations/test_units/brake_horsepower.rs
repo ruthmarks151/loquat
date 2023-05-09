@@ -1,7 +1,8 @@
 use crate::{
-    calculations::{Interpolable, ScalesWith},
+    calculations::{Interpolable, MeanErrorSquareComparable, ScalesWith},
     impl_UnitMath,
 };
+
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use super::{
@@ -38,7 +39,7 @@ impl ScalesWith<InletAirflow> for BrakeHorsepower {
     }
 }
 
-impl Interpolable<StaticPressure> for BrakeHorsepower {
+impl Interpolable<StaticPressure, BrakeHorsepower> for BrakeHorsepower {
     fn interpolate_between(
         (low_pressure, low_bhp): (StaticPressure, Self),
         (high_pressure, high_bhp): (StaticPressure, Self),

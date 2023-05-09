@@ -1,5 +1,5 @@
 use crate::{
-    calculations::{Interpolable, ScalesWith},
+    calculations::{Interpolable, MeanErrorSquareComparable, ScalesWith},
     impl_UnitMath,
 };
 use std::ops::{Add, Div, Mul, Neg, Sub};
@@ -31,7 +31,7 @@ impl ScalesWith<FanDiameter> for OutletAirflow {
     }
 }
 
-impl Interpolable<StaticPressure> for OutletAirflow {
+impl Interpolable<StaticPressure, OutletAirflow> for OutletAirflow {
     fn interpolate_between(
         (low_pressure, low_oaf): (StaticPressure, Self),
         (high_pressure, high_oaf): (StaticPressure, Self),

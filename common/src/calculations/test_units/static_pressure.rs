@@ -1,6 +1,9 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use crate::{calculations::ScalesWith, impl_UnitMath};
+use crate::{
+    calculations::{MeanErrorSquareComparable, ScalesWith},
+    impl_UnitMath,
+};
 
 use super::{fan_diameter::FanDiameter, inlet_airflow::InletAirflow};
 

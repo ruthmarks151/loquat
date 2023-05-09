@@ -33,11 +33,24 @@ impl<T> AsRef<Vec<T>> for FanCurve<T> {
     }
 }
 
-// impl <T> AsVe<Vec<T>> for FanCurve<T> {
-//     fn as_ref(&self) -> &Vec<T> {
-//         &self.points
-//     }
-// }
+impl<T, OP> ScalesTo<T> for FanCurve<OP>
+where
+    OP: ScalesWith<T> + AsRef<T>,
+    T: PartialOrd + Clone,
+    // Slight hack so we dont impliment scaling a fan curve be one of its operating points.
+    // This kinda makes sense if you think about members of the perating points
+    // being orderable amongst themselves, but a whole OP not being comparable
+    // Perhaps this is better captured on the ScalesWith type itself
+{
+    fn scale_to(self, to: &T) -> Self {
+        self.into_iter()
+            .map(|op| {
+                let from: T = op.as_ref().clone();
+                op.scale(&from, to)
+            })
+            .collect()
+    }
+}
 
 impl<T, OP> ScalesWith<T> for FanCurve<OP>
 where
@@ -52,46 +65,46 @@ where
     }
 }
 
-impl<OP, T> ScalesTo<T> for FanCurve<OP>
+pub trait InterpolableFanCurve<X, Y>
 where
-    OP: ScalesTo<T>,
+    Y: Interpolable<X, Y>,
+    X: PartialOrd + Clone,
 {
-    fn scale_to(self, new_airflow: &T) -> Self {
-        self.into_iter()
-            .map(|op| op.scale_to(new_airflow))
-            .collect()
-    }
-}
+    fn as_interpolation_vec(&self) -> Vec<(X, Y)>;
 
-pub trait InterpolableFanCurve<X, OP>
-where
-    X: Clone + PartialOrd,
-    OP: AsRef<X> + Interpolable<X>,
-    Self: AsRef<Vec<OP>>,
-{
-    fn interpolation_pairs(&self) -> Vec<(X, OP)> {
-        let mut ops = self.as_ref().clone();
-        ops.sort_by(|a, b| {
-            let a_x: &X = a.as_ref();
-            a_x.partial_cmp(b.as_ref()).unwrap()
-        });
-        ops.iter()
-            .map(|op| {
-                let x: &X = op.as_ref();
-                (x.clone(), op.clone())
-            })
-            .collect()
+    fn interpolation_pairs(&self) -> Vec<(X, Y)> {
+        let mut ops = self.as_interpolation_vec();
+        ops.sort_by(|(a_x, _a_y), (b_x, _b_y)| a_x.partial_cmp(b_x).unwrap());
+        ops
     }
 
-    fn interpolate(&self, target: &X) -> Result<OP, String> {
+    fn interpolate(&self, target: &X) -> Result<Y, String> {
         let bounds = pairwise(self.interpolation_pairs())
             .find(|((low_x, _), (high_x, _))| high_x >= target && low_x <= target);
         //set up variables
         if let Some((store_low, store_high)) = bounds {
-            Ok(OP::interpolate_between(store_low, store_high, target))
+            Ok(Y::interpolate_between(store_low, store_high, target))
         } else {
             Err("Out of bounds".to_string())
         }
+    }
+}
+
+impl<X, Y, OP> InterpolableFanCurve<X, Y> for FanCurve<OP>
+where
+    OP: Clone + AsRef<X>,
+    Y: Clone + From<OP> + Interpolable<X, Y>,
+    X: Clone + PartialOrd,
+{
+    fn as_interpolation_vec(&self) -> Vec<(X, Y)> {
+        self.clone()
+            .into_iter()
+            .map(|op| {
+                let x: X = (op.as_ref() as &X).clone();
+                let y: Y = op.into();
+                (x, y)
+            })
+            .collect()
     }
 }
 
