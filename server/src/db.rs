@@ -4,11 +4,11 @@ use loquat_common::models::{FanSeries, FanSize, FanType};
 use sqlx::postgres::PgRow;
 use sqlx::{FromRow, Row};
 
-pub struct DbFanSeries(pub FanSeries<()>);
+pub struct Db<T>(pub T);
 
-impl FromRow<'_, PgRow> for DbFanSeries {
+impl FromRow<'_, PgRow> for Db<FanSeries<()>> {
     fn from_row(row: &PgRow) -> sqlx::Result<Self> {
-        Ok(DbFanSeries(FanSeries {
+        Ok(Db(FanSeries {
             id: row.try_get("id")?,
             fan_type: FanType::from_str(row.try_get("fan_type")?).map_err(|_| {
                 sqlx::Error::TypeNotFound {
@@ -20,11 +20,9 @@ impl FromRow<'_, PgRow> for DbFanSeries {
     }
 }
 
-pub struct DbFanSize(pub FanSize<()>);
-
-impl FromRow<'_, PgRow> for DbFanSize {
+impl FromRow<'_, PgRow> for Db<FanSize<()>> {
     fn from_row(row: &PgRow) -> sqlx::Result<Self> {
-        Ok(DbFanSize(FanSize {
+        Ok(Db(FanSize {
             id: row.try_get("id")?,
             fan_series_id: row.try_get("fan_series_id")?,
             fan_series: (),
