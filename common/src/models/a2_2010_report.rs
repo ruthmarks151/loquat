@@ -25,10 +25,7 @@ pub struct A2Standard2010Determination {
 #[derive(Clone, Debug)]
 pub struct A2Standard2010Report {
     a1_report: A1Standard2010Report,
-    induced_flow_fan_size: InducedFlowFanSize,
-    nozzle: Nozzle,
-    fan_size: FanSize,
-    fan_series: FanSeries,
+    induced_flow_fan_size: InducedFlowFanSize<FanSize<FanSeries<()>>, Nozzle>,
     parameters: A2Standard2010Parameters,
     determinations: [A2Standard2010Determination; 10],
 }
@@ -57,7 +54,7 @@ impl From<A2Standard2010Report> for FanCurve<A2OperatingPoint> {
 
 impl From<A2Standard2010Report> for FanDiameter {
     fn from(value: A2Standard2010Report) -> Self {
-        FanDiameter::from_inches(value.fan_size.diameter)
+        FanDiameter::from_inches(value.induced_flow_fan_size.fan_size.diameter)
     }
 }
 
@@ -124,17 +121,18 @@ mod tests {
         let fan_series = FanSeries {
             id: fan_series_id.clone(),
             fan_type: FanType::Axial,
+            fan_sizes: ()
         };
 
         let fan_size = FanSize {
             id: "SKYPLUME G1-ELLV-18 DMF-150".to_string(),
             fan_series_id: fan_series_id.clone(),
             diameter: 27.0,
+            fan_series: fan_series,
         };
 
         let a1_test_event = A1Standard2010Report {
             fan_size: fan_size.clone(),
-            fan_series: fan_series.clone(),
             parameters: A1Standard2010Parameters { rpm: 1750.0 },
             determinations: a1_determinations,
         };
@@ -168,13 +166,13 @@ mod tests {
             induced_flow_fan_size: InducedFlowFanSize {
                 id: "ID".to_string(),
                 fan_size_id: fan_size.id.clone(),
+                fan_size: fan_size.clone(),
                 nozzle_id: "ID".to_string(),
+                nozzle: Nozzle {
+                    id: "ID".to_string(),
+                },
             },
-            nozzle: Nozzle {
-                id: "ID".to_string(),
-            },
-            fan_size: fan_size.clone(),
-            fan_series: fan_series.clone(),
+            
             parameters: A2Standard2010Parameters { rpm: 1750.0 },
             determinations: a2_determinations,
         };

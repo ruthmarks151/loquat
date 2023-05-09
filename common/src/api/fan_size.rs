@@ -1,10 +1,5 @@
-use crate::models::{fan_series::FanSeries, fan_size::FanSize};
-use serde::{Deserialize, Serialize};
+use crate::models::{FanSeries, FanSize};
 
-pub type IndexResponse = Vec<FanSize>;
+pub type IndexResponse = Vec<FanSize<()>>;
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct GetResponse {
-    pub fan_series: FanSeries,
-    pub fan_size: FanSize,
-}
+pub type GetResponse = FanSize<FanSeries<()>>;

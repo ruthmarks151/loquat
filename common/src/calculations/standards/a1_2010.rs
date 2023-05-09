@@ -38,12 +38,6 @@ impl AsRef<BrakeHorsepower> for A1OperatingPoint {
     }
 }
 
-impl From<&A1OperatingPoint> for StaticPressure {
-    fn from(value: &A1OperatingPoint) -> Self {
-        (value.as_ref() as &StaticPressure).clone()
-    }
-}
-
 pub type A1InterpolationPoint = OperatingPoint<tuple_list_type!(FanSpeed, BrakeHorsepower)>;
 
 impl A1InterpolationPoint {
@@ -52,13 +46,6 @@ impl A1InterpolationPoint {
     }
 }
 
-impl From<&A1OperatingPoint> for A1InterpolationPoint {
-    fn from(value: &A1OperatingPoint) -> A1InterpolationPoint {
-        let fs: &FanSpeed = value.as_ref();
-        let bhp: &BrakeHorsepower = value.as_ref();
-        A1InterpolationPoint::new(fs.clone(), bhp.clone())
-    }
-}
 impl From<A1OperatingPoint> for (StaticPressure, A1InterpolationPoint) {
     fn from(OperatingPoint((fs, (_ia, (sp, (bhp, ()))))): A1OperatingPoint) -> Self {
         (sp, A1InterpolationPoint::new(fs, bhp))

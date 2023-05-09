@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use loquat_common::models::{fan_series::FanSeries, fan_size::FanSize};
+use loquat_common::models::{FanSeries, FanSize};
 use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 use yew_router::prelude::Link;
@@ -27,23 +27,19 @@ pub fn ReadFanSeriesPage(props: &ReadFanSeriesPageProps) -> Html {
     let id = props.id.clone();
 
     let format_id = id.replace("%20", " ");
-    let fan_series_option: Rc<Option<FanSeries>> =
+    let fan_series_option: Rc<Option<FanSeries<()>>> =
         use_selector_with_deps(select_fan_series_by_id, format_id);
 
     let fan_series_id = id.replace("%20", " ");
-    let fan_sizes: Rc<Vec<FanSize>> =
+    let fan_sizes: Rc<Vec<FanSize<()>>> =
         use_selector_with_deps(select_fan_sizes_for_fan_series_id, fan_series_id);
 
     {
         use_effect(move || {
             spawn_local(async move {
                 let response = get_fan_series(id).await;
-                if let Ok(response_json) = response {
-                    dispatch.apply(FanStoreActions::InsertFanSeries(response_json.fan_series));
-
-                    for fan_size in response_json.fan_sizes {
-                        dispatch.apply(FanStoreActions::InsertFanSize(fan_size));
-                    }
+                if let Ok(fan_series) = response {
+                    dispatch.apply(FanStoreActions::InsertFanSeriesWithSizes(fan_series));
                 };
             });
             || {}

@@ -21,8 +21,7 @@ pub struct A1Standard2010Determination {
 
 #[derive(Clone, Debug)]
 pub struct A1Standard2010Report {
-    pub fan_size: FanSize,
-    pub fan_series: FanSeries,
+    pub fan_size: FanSize<FanSeries<()>>,
     pub parameters: A1Standard2010Parameters,
     pub determinations: [A1Standard2010Determination; 10],
 }
@@ -99,12 +98,14 @@ mod tests {
             fan_size: FanSize {
                 id: "SKYPLUME G1-ELLV-18 DMF-150".to_string(),
                 fan_series_id: fan_series_id.clone(),
+                fan_series: FanSeries {
+                    id: fan_series_id.clone(),
+                    fan_type: FanType::Axial,
+                    fan_sizes: (),
+                },
                 diameter: 27.0,
             },
-            fan_series: FanSeries {
-                id: fan_series_id.clone(),
-                fan_type: FanType::Axial,
-            },
+            
             parameters: A1Standard2010Parameters { rpm: 1750.0 },
             determinations: test_points,
         };

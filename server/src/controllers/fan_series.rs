@@ -1,7 +1,7 @@
 use axum::{extract::Path, Extension, Json};
 use sqlx::PgPool;
 
-use loquat_common::api::fan_series::{GetResponse, IndexResponse};
+use loquat_common::{api::fan_series::{GetResponse, IndexResponse}, models::FanSeries};
 
 use crate::db::{DbFanSeries, DbFanSize};
 
@@ -31,8 +31,10 @@ pub async fn get(
         .map_err(|err| err.to_string())
         .map(|data: Vec<DbFanSize>| data.into_iter().map(|DbFanSize(size)| size).collect())?;
 
-    Ok(Json(GetResponse {
-        fan_series,
-        fan_sizes,
-    }))
+    Ok(Json(FanSeries{
+            id: fan_series.id,
+            fan_type: fan_series.fan_type,
+            fan_sizes,
+        },
+    ))
 }

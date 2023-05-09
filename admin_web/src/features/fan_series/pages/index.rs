@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use loquat_common::models::fan_series::FanSeries;
+use loquat_common::models::FanSeries;
 use wasm_bindgen_futures::spawn_local;
 use yew::{function_component, html, use_effect, Html};
 use yew_router::prelude::Link;
@@ -15,7 +15,7 @@ use crate::{
 #[function_component]
 pub fn IndexFanSeriesPage() -> Html {
     let (_state, dispatch) = use_store::<FanStore>();
-    let fan_serieses: Rc<Vec<FanSeries>> = use_selector(select_all_fan_series);
+    let fan_serieses: Rc<Vec<FanSeries<()>>> = use_selector(select_all_fan_series);
 
     use_effect(move || {
         spawn_local(async move {
