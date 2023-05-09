@@ -1,10 +1,10 @@
 use crate::{
-    calculations::{MeanErrorSquareComparable, ScalesWith},
+    calculations::traits::{MeanErrorSquareComparable, ScalesWith},
     impl_UnitMath,
 };
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use super::fan_diameter::FanDiameter;
+use super::FanDiameter;
 
 #[derive(Clone, PartialEq, Debug, Copy, PartialOrd)]
 pub struct InletAirflow(f64);

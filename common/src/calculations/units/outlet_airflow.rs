@@ -1,10 +1,10 @@
 use crate::{
-    calculations::{Interpolable, MeanErrorSquareComparable, ScalesWith},
+    calculations::traits::{Interpolable, MeanErrorSquareComparable, ScalesWith},
     impl_UnitMath,
 };
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use super::{fan_diameter::FanDiameter, static_pressure::StaticPressure};
+use super::{static_pressure::StaticPressure, FanDiameter};
 
 #[derive(Clone, PartialEq, Debug, Copy)]
 pub struct OutletAirflow(f64);

@@ -1,11 +1,11 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use crate::{
-    calculations::{MeanErrorSquareComparable, ScalesWith},
+    calculations::traits::{MeanErrorSquareComparable, ScalesWith},
     impl_UnitMath,
 };
 
-use super::{fan_diameter::FanDiameter, inlet_airflow::InletAirflow};
+use super::{inlet_airflow::InletAirflow, FanDiameter};
 
 #[derive(Clone, PartialEq, Debug, PartialOrd, Copy)]
 pub struct StaticPressure(f64);

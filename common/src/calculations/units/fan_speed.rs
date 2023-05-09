@@ -1,13 +1,11 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 use crate::{
-    calculations::{Interpolable, MeanErrorSquareComparable, ScalesWith},
+    calculations::traits::{Interpolable, MeanErrorSquareComparable, ScalesWith},
     impl_UnitMath,
 };
 
-use super::{
-    fan_diameter::FanDiameter, inlet_airflow::InletAirflow, static_pressure::StaticPressure,
-};
+use super::{inlet_airflow::InletAirflow, static_pressure::StaticPressure, FanDiameter};
 
 #[derive(Clone, PartialEq, Debug, Copy)]
 pub struct FanSpeed(f64);

@@ -1,15 +1,8 @@
 use crate::{
     calculations::{
-        a1_operating_point::A1OperatingPoint,
-        a2_2010::CanProduceA1A2Curve,
-        a2_operating_point::A2OperatingPoint,
-        test_units::{
-            fan_curve::{FanCurve, FanCurveScalesWith},
-            fan_diameter::FanDiameter,
-            fan_speed::FanSpeed,
-            outlet_airflow::OutletAirflow,
-            static_pressure::StaticPressure,
-        },
+        core::FanCurve,
+        standards::{A1OperatingPoint, A2OperatingPoint, CanProduceA1A2Curve},
+        units::{FanDiameter, FanSpeed, OutletAirflow, StaticPressure},
     },
     models::{fan_series::FanSeries, fan_size::FanSize},
 };
@@ -40,34 +33,39 @@ pub struct A2Standard2010Report {
     determinations: [A2Standard2010Determination; 10],
 }
 
-impl FanCurveScalesWith<FanDiameter, A2OperatingPoint> for A2Standard2010Report {
-    fn fan_curve(&self) -> FanCurve<A2OperatingPoint> {
-        self.determinations
+impl From<A2Standard2010Report> for FanCurve<A1OperatingPoint> {
+    fn from(value: A2Standard2010Report) -> Self {
+        Self::from(value.a1_report)
+    }
+}
+
+impl From<A2Standard2010Report> for FanCurve<A2OperatingPoint> {
+    fn from(value: A2Standard2010Report) -> Self {
+        value
+            .determinations
             .iter()
             .map(|op| {
                 A2OperatingPoint::new(
-                    FanSpeed::from_rpm(self.parameters.rpm),
+                    FanSpeed::from_rpm(value.parameters.rpm),
                     OutletAirflow::from_cfm(op.cfm),
                     StaticPressure::from_inches(op.static_pressure),
                 )
             })
             .collect()
     }
+}
 
-    fn current_value(&self) -> FanDiameter {
-        FanDiameter::from_inches(self.fan_size.diameter)
+impl From<A2Standard2010Report> for FanDiameter {
+    fn from(value: A2Standard2010Report) -> Self {
+        FanDiameter::from_inches(value.fan_size.diameter)
     }
 }
 
-impl FanCurveScalesWith<FanDiameter, A1OperatingPoint> for A2Standard2010Report {
-    fn current_value(&self) -> FanDiameter {
-        FanDiameter::from_inches(self.fan_size.diameter)
-    }
-
-    fn fan_curve(&self) -> FanCurve<A1OperatingPoint> {
-        self.a1_report.fan_curve()
-    }
-}
+// impl AsRef<FanDiameter> for A2Standard2010Report {
+//     fn as_ref(&self) -> &FanDiameter {
+//         &FanDiameter::from_inches(self.fan_size.diameter)
+//     }
+// }
 
 impl CanProduceA1A2Curve for A2Standard2010Report {}
 
@@ -76,11 +74,9 @@ mod tests {
 
     use crate::{
         calculations::{
-            test_units::{
-                fan_curve::InterpolableFanCurve, fan_diameter::FanDiameter,
-                static_pressure::StaticPressure,
-            },
-            Interpolable,
+            core::InterpolableFanCurve,
+            traits::Interpolable,
+            units::{FanDiameter, StaticPressure},
         },
         models::{
             a1_2010_report::{A1Standard2010Determination, A1Standard2010Parameters},
@@ -183,7 +179,7 @@ mod tests {
             determinations: a2_determinations,
         };
 
-        let a2_curve: FanCurve<A2OperatingPoint> = a2_test_event.fan_curve();
+        let a2_curve: FanCurve<A2OperatingPoint> = FanCurve::from(a2_test_event.clone());
         let interpolated_outlet: Result<OutletAirflow, String> =
             a2_curve.interpolate(&StaticPressure::from_inches(2.593));
 

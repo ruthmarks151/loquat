@@ -1,13 +1,8 @@
-use crate::{
-    calculations::{Interpolable, MeanErrorSquareComparable, ScalesWith},
-    impl_UnitMath,
-};
-
+use crate::calculations::traits::{Interpolable, MeanErrorSquareComparable, ScalesWith};
+use crate::impl_UnitMath;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
-use super::{
-    fan_diameter::FanDiameter, inlet_airflow::InletAirflow, static_pressure::StaticPressure,
-};
+use super::{inlet_airflow::InletAirflow, static_pressure::StaticPressure, FanDiameter};
 
 #[derive(Clone, PartialEq, Debug, Copy)]
 pub struct BrakeHorsepower(f64);

@@ -1,6 +1,8 @@
 use tuple_list::TupleList;
 
-use crate::calculations::{Interpolable, MeanErrorSquareComparable, ScalesTo, ScalesWith};
+use crate::calculations::traits::{
+    Interpolable, Lenable, MeanErrorSquareComparable, ScalesTo, ScalesWith,
+};
 
 #[derive(Clone)]
 pub struct OperatingPoint<Tup: TupleList>(pub Tup);
@@ -40,49 +42,6 @@ where
             (high_x, high_tup),
             target,
         ))
-    }
-}
-
-trait Lenable {
-    fn len(&self) -> i32;
-}
-
-impl Lenable for () {
-    fn len(&self) -> i32 {
-        0
-    }
-}
-
-impl<Head, Tail: TupleList + Lenable> Lenable for (Head, Tail) {
-    fn len(&self) -> i32 {
-        1 + self.1.len()
-    }
-}
-
-impl MeanErrorSquareComparable for () {
-    fn error_from(&self, _other: &Self) -> f64 {
-        0.0
-    }
-
-    fn error_sum(&self, _other: &Self) -> f64 {
-        0.0
-    }
-}
-
-impl<Head, Tail> MeanErrorSquareComparable for (Head, Tail)
-where
-    Head: MeanErrorSquareComparable,
-    Tail: MeanErrorSquareComparable + TupleList + Lenable,
-    (Head, Tail): TupleList,
-{
-    fn error_from(&self, other: &Self) -> f64 {
-        let dimension_count: f64 = (self.len() + 1).into();
-        self.error_sum(other) / dimension_count
-    }
-
-    fn error_sum(&self, (other_head, other_tail): &Self) -> f64 {
-        let (head, tail) = self;
-        head.error_sum(other_head) + tail.error_sum(other_tail)
     }
 }
 

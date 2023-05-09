@@ -1,4 +1,4 @@
-use crate::calculations::{Interpolable, ScalesTo, ScalesWith};
+use crate::calculations::traits::{Interpolable, ScalesTo, ScalesWith};
 use crate::util::pairwise;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -35,7 +35,7 @@ impl<T> AsRef<Vec<T>> for FanCurve<T> {
 
 impl<T, OP> ScalesTo<T> for FanCurve<OP>
 where
-    OP: ScalesWith<T> + AsRef<T>,
+    OP: ScalesTo<T>,
     T: PartialOrd + Clone,
     // Slight hack so we dont impliment scaling a fan curve be one of its operating points.
     // This kinda makes sense if you think about members of the perating points
@@ -43,12 +43,7 @@ where
     // Perhaps this is better captured on the ScalesWith type itself
 {
     fn scale_to(self, to: &T) -> Self {
-        self.into_iter()
-            .map(|op| {
-                let from: T = op.as_ref().clone();
-                op.scale(&from, to)
-            })
-            .collect()
+        self.into_iter().map(|op| op.scale_to(to)).collect()
     }
 }
 
@@ -93,17 +88,14 @@ where
 impl<X, Y, OP> InterpolableFanCurve<X, Y> for FanCurve<OP>
 where
     OP: Clone + AsRef<X>,
-    Y: Clone + From<OP> + Interpolable<X, Y>,
+    (X, Y): From<OP>,
+    Y: Clone + Interpolable<X, Y>,
     X: Clone + PartialOrd,
 {
     fn as_interpolation_vec(&self) -> Vec<(X, Y)> {
         self.clone()
             .into_iter()
-            .map(|op| {
-                let x: X = (op.as_ref() as &X).clone();
-                let y: Y = op.into();
-                (x, y)
-            })
+            .map(|op| <(X, Y)>::from(op))
             .collect()
     }
 }

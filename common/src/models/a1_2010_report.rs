@@ -1,15 +1,8 @@
 use crate::{
     calculations::{
-        a1_2010::CanFindA1OperatingPoint,
-        a1_operating_point::A1OperatingPoint,
-        test_units::{
-            brake_horsepower::BrakeHorsepower,
-            fan_curve::{FanCurve, FanCurveScalesWith},
-            fan_diameter::FanDiameter,
-            fan_speed::FanSpeed,
-            inlet_airflow::InletAirflow,
-            static_pressure::StaticPressure,
-        },
+        core::FanCurve,
+        standards::{A1OperatingPoint, CanFindA1OperatingPoint},
+        units::{BrakeHorsepower, FanDiameter, FanSpeed, InletAirflow, StaticPressure},
     },
     models::{fan_series::FanSeries, fan_size::FanSize},
 };
@@ -34,13 +27,14 @@ pub struct A1Standard2010Report {
     pub determinations: [A1Standard2010Determination; 10],
 }
 
-impl FanCurveScalesWith<FanDiameter, A1OperatingPoint> for A1Standard2010Report {
-    fn fan_curve(&self) -> FanCurve<A1OperatingPoint> {
-        self.determinations
+impl From<A1Standard2010Report> for FanCurve<A1OperatingPoint> {
+    fn from(value: A1Standard2010Report) -> Self {
+        value
+            .determinations
             .iter()
             .map(|op| {
                 A1OperatingPoint::new(
-                    FanSpeed::from_rpm(self.parameters.rpm),
+                    FanSpeed::from_rpm(value.parameters.rpm),
                     InletAirflow::from_cfm(op.cfm),
                     StaticPressure::from_inches(op.static_pressure),
                     BrakeHorsepower::from_hp(op.brake_horsepower),
@@ -48,9 +42,10 @@ impl FanCurveScalesWith<FanDiameter, A1OperatingPoint> for A1Standard2010Report 
             })
             .collect()
     }
-
-    fn current_value(&self) -> FanDiameter {
-        FanDiameter::from_inches(self.fan_size.diameter)
+}
+impl From<A1Standard2010Report> for FanDiameter {
+    fn from(value: A1Standard2010Report) -> Self {
+        FanDiameter::from_inches(value.fan_size.diameter)
     }
 }
 
@@ -60,12 +55,9 @@ impl CanFindA1OperatingPoint for A1Standard2010Report {}
 mod tests {
     use crate::{
         calculations::{
-            a1_2010::{A1InterpolationPoint, CanFindA1OperatingPoint},
-            test_units::{
-                fan_diameter::FanDiameter, inlet_airflow::InletAirflow, operating_point,
-                static_pressure::StaticPressure,
-            },
-            MeanErrorSquareComparable,
+            standards::{A1InterpolationPoint, CanFindA1OperatingPoint},
+            traits::MeanErrorSquareComparable,
+            units::{FanDiameter, InletAirflow, StaticPressure},
         },
         models::{fan_series::FanSeries, fan_size::FanSize, fan_type::FanType},
     };
@@ -127,8 +119,10 @@ mod tests {
         if let Ok(point) = op_res {
             // Ensure mean squared error is less than .1% ^ 2
             let allowable_percent_error = (0.1_f64 / 100.0).powi(2);
-            let actual_point =
-                A1InterpolationPoint::new(FanSpeed::from_rpm(1750.0), BrakeHorsepower::from_hp(7.481));
+            let actual_point = A1InterpolationPoint::new(
+                FanSpeed::from_rpm(1750.0),
+                BrakeHorsepower::from_hp(7.481),
+            );
             let percent_square_error = point.error_from(&actual_point);
             println!("Error Amount: {}", percent_square_error);
             assert!(percent_square_error < allowable_percent_error);
