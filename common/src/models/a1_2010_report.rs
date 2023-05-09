@@ -105,7 +105,7 @@ mod tests {
                 },
                 diameter: 27.0,
             },
-            
+
             parameters: A1Standard2010Parameters { rpm: 1750.0 },
             determinations: test_points,
         };

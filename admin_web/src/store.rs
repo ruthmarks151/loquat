@@ -40,14 +40,15 @@ impl Reducer<FanStore> for FanStoreActions {
             FanStoreActions::InsertFanSeriesWithSizes(fan_series) => {
                 let (flat_series, sizes) = fan_series.flatten();
                 let store_with_series = FanStoreActions::InsertFanSeries(flat_series).apply(store);
-                sizes.into_iter().fold(store_with_series, |sto, size| FanStoreActions::InsertFanSize(size).apply(sto))
-                
-            },
+                sizes.into_iter().fold(store_with_series, |sto, size| {
+                    FanStoreActions::InsertFanSize(size).apply(sto)
+                })
+            }
             FanStoreActions::InsertFanSizeWithSeries(fan_size) => {
                 let (size, series) = fan_size.flatten();
                 let store_with_size = FanStoreActions::InsertFanSize(size).apply(store);
                 FanStoreActions::InsertFanSeries(series).apply(store_with_size)
-            },
+            }
         }
     }
 }

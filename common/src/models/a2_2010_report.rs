@@ -121,7 +121,7 @@ mod tests {
         let fan_series = FanSeries {
             id: fan_series_id.clone(),
             fan_type: FanType::Axial,
-            fan_sizes: ()
+            fan_sizes: (),
         };
 
         let fan_size = FanSize {
@@ -172,7 +172,7 @@ mod tests {
                     id: "ID".to_string(),
                 },
             },
-            
+
             parameters: A2Standard2010Parameters { rpm: 1750.0 },
             determinations: a2_determinations,
         };

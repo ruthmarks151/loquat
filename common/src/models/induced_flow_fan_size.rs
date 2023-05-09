@@ -8,12 +8,22 @@ pub struct InducedFlowFanSize<FanSizeRepr, NozzleRepr> {
     pub nozzle: NozzleRepr,
 }
 
-impl <FanSizeRepr, NozzleRepr>InducedFlowFanSize<FanSizeRepr, NozzleRepr> {
+impl<FanSizeRepr, NozzleRepr> InducedFlowFanSize<FanSizeRepr, NozzleRepr> {
     pub fn flatten(self) -> (InducedFlowFanSize<(), ()>, FanSizeRepr, NozzleRepr) {
-        let InducedFlowFanSize{ id, fan_size_id, fan_size, nozzle_id, nozzle } = self;
+        let InducedFlowFanSize {
+            id,
+            fan_size_id,
+            fan_size,
+            nozzle_id,
+            nozzle,
+        } = self;
         (
-            InducedFlowFanSize{
-                id, fan_size_id, fan_size: (), nozzle_id, nozzle: ()
+            InducedFlowFanSize {
+                id,
+                fan_size_id,
+                fan_size: (),
+                nozzle_id,
+                nozzle: (),
             },
             fan_size,
             nozzle,
