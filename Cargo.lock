@@ -1359,6 +1359,7 @@ name = "loquat_server"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "itertools",
  "loquat_common",
  "shuttle-axum",
  "shuttle-runtime",

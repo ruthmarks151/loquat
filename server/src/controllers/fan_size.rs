@@ -9,9 +9,7 @@ use loquat_common::{
 use crate::db::Db;
 
 pub async fn index(Extension(pool): Extension<PgPool>) -> Result<Json<IndexResponse>, String> {
-    let fan_sizes = sqlx::query_as(
-            "SELECT * FROM fan_sizes LIMIT 50"
-        )
+    let fan_sizes = sqlx::query_as("SELECT * FROM fan_sizes LIMIT 50")
         .fetch_all(&pool)
         .await
         .map_err(|err| err.to_string())
