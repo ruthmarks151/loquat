@@ -14,11 +14,11 @@ pub enum FanType {
 #[derive(Debug, PartialEq, Eq)]
 pub struct ParseFanTypeError;
 
-impl FromStr for FanType {
-    type Err = ParseFanTypeError;
+impl TryFrom<&str> for FanType {
+    type Error = ParseFanTypeError;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
             "centrifugal" => Ok(Self::Centrifugal),
             "mixed_flow" => Ok(Self::MixedFlow),
             "axial" => Ok(Self::Axial),

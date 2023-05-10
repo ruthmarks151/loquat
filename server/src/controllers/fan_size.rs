@@ -6,14 +6,22 @@ use loquat_common::{
     models::{FanSeries, FanSize},
 };
 
-use crate::db::Db;
-
 pub async fn index(Extension(pool): Extension<PgPool>) -> Result<Json<IndexResponse>, String> {
-    let fan_sizes = sqlx::query_as("SELECT * FROM fan_sizes LIMIT 50")
+    let fan_sizes = sqlx::query!("SELECT * FROM fan_sizes LIMIT 50")
         .fetch_all(&pool)
         .await
         .map_err(|err| err.to_string())
-        .map(|data: Vec<Db<FanSize<()>>>| data.into_iter().map(|db_fan| db_fan.0).collect())?;
+        .map(|records| {
+            records
+                .into_iter()
+                .map(|record| FanSize {
+                    id: record.id,
+                    fan_series_id: record.fan_series_id,
+                    fan_series: (),
+                    diameter: record.diameter,
+                })
+                .collect()
+        })?;
     Ok(Json(fan_sizes))
 }
 
@@ -21,17 +29,29 @@ pub async fn get(
     Path(id): Path<String>,
     Extension(pool): Extension<PgPool>,
 ) -> Result<Json<GetResponse>, String> {
-    let fan_size = sqlx::query_as(
+    let fan_size = sqlx::query!(
         "SELECT fan_sizes.id as fan_size_id, fan_series_id, fan_type, diameter
              FROM fan_sizes 
              JOIN fan_serieses ON fan_series_id = fan_serieses.id 
              WHERE fan_sizes.id = $1",
+        id
     )
-    .bind(id)
     .fetch_one(&pool)
     .await
     .map_err(|err| err.to_string())
-    .map(|Db(data): Db<FanSize<FanSeries<()>>>| data)?;
+    .map(|record| FanSize {
+        id: record.fan_size_id,
+        fan_series_id: record.fan_series_id.clone(),
+        fan_series: FanSeries {
+            id: record.fan_series_id,
+            fan_type: record
+                .fan_type[..]
+                .try_into()
+                .map_err(|err| format!("Could not parse fan type: '{:?}'", err).to_string()).unwrap(),
+            fan_sizes: (),
+        },
+        diameter: record.diameter,
+    })?;
 
     Ok(Json(fan_size))
 }
