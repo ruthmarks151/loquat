@@ -28,23 +28,16 @@ pub fn ReadFanSeriesPage(props: &ReadFanSeriesPageProps) -> Html {
 
     let format_id = id.replace("%20", " ");
     let fan_series_option: Rc<Option<FanSeries<()>>> =
-        use_selector_with_deps(select_fan_series_by_id, format_id);
+        use_selector_with_deps(select_fan_series_by_id, format_id.clone());
 
     let fan_series_id = id.replace("%20", " ");
     let fan_sizes: Rc<Vec<FanSize<()>>> =
         use_selector_with_deps(select_fan_sizes_for_fan_series_id, fan_series_id);
 
-    {
-        use_effect(move || {
-            spawn_local(async move {
-                let response = get_fan_series(id).await;
-                if let Ok(fan_series) = response {
-                    dispatch.apply(FanStoreActions::InsertFanSeriesWithSizes(fan_series));
-                };
-            });
-            || {}
-        });
-    }
+    use_effect( move || { 
+        dispatch.apply(FanStoreActions::GetFanSeries(format_id));
+        return || {} 
+    });
 
     match fan_series_option.as_ref() {
         None => {

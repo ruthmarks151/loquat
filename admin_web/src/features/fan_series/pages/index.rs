@@ -6,7 +6,6 @@ use yew::{function_component, html, use_effect, Html};
 use yew_router::prelude::Link;
 use yewdux::prelude::{use_selector, use_store};
 
-use super::super::api::index_fan_serieses;
 use crate::{
     route::Route,
     store::{selectors::select_all_fan_series, FanStore, FanStoreActions},
@@ -16,16 +15,9 @@ use crate::{
 pub fn IndexFanSeriesPage() -> Html {
     let (_state, dispatch) = use_store::<FanStore>();
     let fan_serieses: Rc<Vec<FanSeries<()>>> = use_selector(select_all_fan_series);
-
-    use_effect(move || {
-        spawn_local(async move {
-            if let Ok(json_resp) = index_fan_serieses().await {
-                for fan_series in json_resp {
-                    dispatch.apply(FanStoreActions::InsertFanSeries(fan_series));
-                }
-            }
-        });
-        || {}
+    use_effect( move || { 
+        dispatch.apply(FanStoreActions::IndexFanSeries);
+        return || {} 
     });
 
     if fan_serieses.is_empty() {

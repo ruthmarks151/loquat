@@ -1,24 +1,70 @@
-use std::{collections::HashMap, rc::Rc};
+use std::{collections::HashMap, rc::Rc, future::Future};
 
 use loquat_common::models::{FanSeries, FanSize};
+use yew::platform::spawn_local;
 use yewdux::prelude::*;
 
+use crate::features::{fan_series::api::{index_fan_serieses, get_fan_series}, fan_size::api::get_fan_size};
 #[derive(Debug, Default, Clone, PartialEq, Eq, Store)]
 pub struct FanStore {
     pub fan_serieses: HashMap<String, FanSeries<()>>,
     pub fan_sizes: HashMap<String, FanSize<()>>,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+
 pub enum FanStoreActions {
+    IndexFanSeries,
+    GetFanSeries(String),
+    GetFanSize(String),
     InsertFanSeries(FanSeries<()>),
     InsertFanSize(FanSize<()>),
     InsertFanSeriesWithSizes(FanSeries<Vec<FanSize<()>>>),
     InsertFanSizeWithSeries(FanSize<FanSeries<()>>),
 }
 
+fn fetch_and_store<Fut, Resp>(fetching: Fut, action: impl Fn(Resp) -> FanStoreActions + 'static) 
+where
+Fut: Future<Output = Result<Resp, String>>+ 'static
+{
+    spawn_local(async move {
+        if let Ok(json_resp) = fetching.await {
+            let dispatch = Dispatch::<FanStore>::new();
+            dispatch.apply(action(json_resp));
+        }
+    });
+}
+
+fn fetch_and_store_many<Fut, Resp: Sized>(fetching: Fut, action: impl Fn(Resp) -> FanStoreActions + 'static)
+where
+Fut: Future<Output = Result<Vec<Resp>, String>> + 'static
+ {
+    spawn_local(async move {
+        if let Ok(json_resp) = fetching.await {
+            let dispatch = Dispatch::<FanStore>::new();
+            for item in json_resp{
+                dispatch.apply(action(item));
+            }
+        }
+    });
+}
+
 impl Reducer<FanStore> for FanStoreActions {
     fn apply(self, store: Rc<FanStore>) -> Rc<FanStore> {
+        log::info!("Applying action {:#?}", &self);
         match self {
+            FanStoreActions::IndexFanSeries => {
+                fetch_and_store_many(index_fan_serieses(), FanStoreActions::InsertFanSeries);
+                store
+            },
+            FanStoreActions::GetFanSeries(id) => {
+                fetch_and_store(get_fan_series(id), FanStoreActions::InsertFanSeriesWithSizes);
+                store
+            },
+            FanStoreActions::GetFanSize(id) => {
+                fetch_and_store(get_fan_size(id), FanStoreActions::InsertFanSizeWithSeries);
+                store
+            },
             FanStoreActions::InsertFanSeries(fan_series) => {
                 let mut fan_serieses = store.fan_serieses.clone();
                 fan_serieses.insert(fan_series.id.clone(), fan_series);

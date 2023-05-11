@@ -2,11 +2,10 @@ pub mod read {
     use std::rc::Rc;
 
     use loquat_common::models::FanSize;
-    use yew::{platform::spawn_local, prelude::*};
+    use yew::prelude::*;
     use yew_router::prelude::Link;
     use yewdux::prelude::{use_selector_with_deps, use_store};
 
-    use super::super::api::get_fan_size;
     use crate::{
         route::Route,
         store::{selectors::select_fan_size_by_id, FanStore, FanStoreActions},
@@ -24,15 +23,11 @@ pub mod read {
 
         let format_id = id.replace("%20", " ");
         let fan_size_option: Rc<Option<FanSize<()>>> =
-            use_selector_with_deps(select_fan_size_by_id, format_id);
+            use_selector_with_deps(select_fan_size_by_id, format_id.clone());
 
-        use_effect(move || {
-            spawn_local(async move {
-                if let Ok(fan_size) = get_fan_size(id).await {
-                    dispatch.apply(FanStoreActions::InsertFanSizeWithSeries(fan_size));
-                }
-            });
-            || {}
+        use_effect( move || { 
+            dispatch.apply(FanStoreActions::GetFanSize(format_id));
+            return || {} 
         });
 
         match fan_size_option.as_ref() {
