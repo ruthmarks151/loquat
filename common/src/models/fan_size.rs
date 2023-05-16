@@ -9,7 +9,8 @@ where
     pub id: String,
     pub fan_series_id: String,
     pub fan_series: FanSeriesRepr,
-    pub diameter: f64,
+    pub diameter: f64, // Inches
+    pub outlet_area: f64, // Square inches
 }
 
 impl<FanSeriesRepr: Eq + PartialEq> Eq for FanSize<FanSeriesRepr> {}
@@ -21,6 +22,7 @@ impl<FanSeriesRepr> From<FanSize<FanSeriesRepr>> for (FanSize<()>, FanSeriesRepr
             fan_series_id,
             fan_series,
             diameter,
+            outlet_area,
         } = value;
         (
             FanSize {
@@ -28,6 +30,7 @@ impl<FanSeriesRepr> From<FanSize<FanSeriesRepr>> for (FanSize<()>, FanSeriesRepr
                 fan_series_id,
                 fan_series: (),
                 diameter,
+                outlet_area,
             },
             fan_series,
         )
@@ -42,6 +45,7 @@ impl<FanSeriesRepr> From<(FanSize<()>, FanSeriesRepr)> for FanSize<FanSeriesRepr
                 fan_series_id,
                 fan_series: _,
                 diameter,
+                outlet_area,
             },
             fan_series,
         ) = value;
@@ -50,6 +54,7 @@ impl<FanSeriesRepr> From<(FanSize<()>, FanSeriesRepr)> for FanSize<FanSeriesRepr
             fan_series_id,
             fan_series,
             diameter,
+            outlet_area,
         }
     }
 }

@@ -51,6 +51,7 @@ pub async fn get(
                 fan_series_id: row.fan_series_id,
                 fan_series: (),
                 diameter: row.diameter,
+                outlet_area: row.outlet_area,
             })
             .collect();
         let fan_type: FanType = fan_type[..]

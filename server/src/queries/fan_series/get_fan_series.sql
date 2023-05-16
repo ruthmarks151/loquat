@@ -1,4 +1,4 @@
-SELECT fan_sizes.id as fan_size_id, diameter, fan_serieses.id as fan_series_id, fan_type
+SELECT fan_sizes.id as fan_size_id, diameter, fan_serieses.id as fan_series_id, fan_type, outlet_area
             FROM fan_serieses
             JOIN fan_sizes
             ON fan_sizes.fan_series_id = fan_serieses.id

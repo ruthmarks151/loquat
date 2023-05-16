@@ -19,6 +19,7 @@ pub async fn index(Extension(pool): Extension<PgPool>) -> Result<Json<IndexRespo
                     fan_series_id: record.fan_series_id,
                     fan_series: (),
                     diameter: record.diameter,
+                    outlet_area: record.outlet_area,
                 })
                 .collect()
         })?;
@@ -30,7 +31,7 @@ pub async fn get(
     Extension(pool): Extension<PgPool>,
 ) -> Result<Json<GetResponse>, String> {
     let fan_size = sqlx::query!(
-        "SELECT fan_sizes.id as fan_size_id, fan_series_id, fan_type, diameter
+        "SELECT fan_sizes.id as fan_size_id, fan_series_id, fan_type, diameter, outlet_area
              FROM fan_sizes 
              JOIN fan_serieses ON fan_series_id = fan_serieses.id 
              WHERE fan_sizes.id = $1",
@@ -51,6 +52,7 @@ pub async fn get(
             fan_sizes: (),
         },
         diameter: record.diameter,
+        outlet_area: record.outlet_area,
     })?;
 
     Ok(Json(fan_size))

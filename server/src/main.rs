@@ -23,6 +23,22 @@ async fn axum(
         .await
         .expect("Schema didn't execute");
 
+    
+    sqlx::migrate!()
+        .run(&pool)
+        .await
+        .expect("Migrations failed :(");
+
+
+    for statement in [
+        "INSERT INTO fan_serieses (id, fan_type) VALUES ('SKYPLUME G2-ELLV DMF', 'centrifugal') ON CONFLICT DO NOTHING;",
+        "INSERT INTO fan_serieses (id, fan_type) VALUES ('SKYPLUME G1-ELLV DMF', 'mixed_flow') ON CONFLICT DO NOTHING;",
+        "INSERT INTO fan_sizes (id, fan_series_id, diameter, outlet_area) VALUES ('SKYPLUME G1-ELLV DMF-150', 'SKYPLUME G1-ELLV DMF', 18.25, 200.5) ON CONFLICT DO NOTHING;",
+        "INSERT INTO fan_sizes (id, fan_series_id, diameter, outlet_area) VALUES ('SKYPLUME G1-ELLV DMF-250', 'SKYPLUME G1-ELLV DMF', 25.0, 300.2) ON CONFLICT DO NOTHING;",
+    ] {
+        sqlx::query(statement).execute(&pool).await.expect("Data insert failed");
+    }
+
     // In production, serve from the root static folder
     // In dev, this is empty and the frontend proxies to anything /api to this server
     let serve_dir = get_service(
