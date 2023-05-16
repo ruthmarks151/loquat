@@ -5,9 +5,7 @@ pub trait ScalesWith<Context> {
 }
 
 impl<T> ScalesWith<T> for () {
-    fn scale(self, _from: &T, _to: &T) -> Self {
-        ()
-    }
+    fn scale(self, _from: &T, _to: &T) -> Self {}
 }
 
 impl<ScaledValue, Head, Tail> ScalesWith<ScaledValue> for (Head, Tail)
@@ -16,7 +14,8 @@ where
     Tail: ScalesWith<ScaledValue> + TupleList,
 {
     fn scale(self, from: &ScaledValue, to: &ScaledValue) -> Self {
-        (self.0.scale(from, to), self.1.scale(from, to))
+        let (head, tail) = self;
+        (head.scale(from, to), tail.scale(from, to))
     }
 }
 

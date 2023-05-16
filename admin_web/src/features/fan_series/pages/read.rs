@@ -1,20 +1,13 @@
-use std::rc::Rc;
-
+use crate::api::store::Store as ApiStore;
+use crate::{
+    api::store::{ApiRequestAction, GetParameters, Gettable},
+    route::Route,
+    store::{select_fan_series_by_id, use_app_store_selector, use_app_store_selector_with_deps},
+};
 use loquat_common::models::{FanSeries, FanSize};
-use wasm_bindgen_futures::spawn_local;
 use yew::prelude::*;
 use yew_router::prelude::Link;
-use yewdux::prelude::{use_selector_with_deps, use_store};
-
-use crate::{
-    route::Route,
-    store::{
-        selectors::{select_fan_series_by_id, select_fan_sizes_for_fan_series_id},
-        FanStore, FanStoreActions,
-    },
-};
-
-use super::super::api::get_fan_series;
+use yewdux::prelude::use_store;
 
 #[derive(Properties, PartialEq)]
 pub struct ReadFanSeriesPageProps {
@@ -23,23 +16,27 @@ pub struct ReadFanSeriesPageProps {
 
 #[function_component]
 pub fn ReadFanSeriesPage(props: &ReadFanSeriesPageProps) -> Html {
-    let (_state, dispatch) = use_store::<FanStore>();
+    let (_state, dispatch) = use_store::<ApiStore>();
     let id = props.id.clone();
 
     let format_id = id.replace("%20", " ");
-    let fan_series_option: Rc<Option<FanSeries<()>>> =
-        use_selector_with_deps(select_fan_series_by_id, format_id.clone());
+    let fan_series_option: Option<FanSeries<Vec<FanSize<()>>>> =
+        use_app_store_selector_with_deps(select_fan_series_by_id, format_id.clone());
 
-    let fan_series_id = id.replace("%20", " ");
-    let fan_sizes: Rc<Vec<FanSize<()>>> =
-        use_selector_with_deps(select_fan_sizes_for_fan_series_id, fan_series_id);
+    use_effect_with_deps(
+        move |_| {
+            dispatch.apply(ApiRequestAction::Get(
+                GetParameters {
+                    ignore_cache: false,
+                },
+                Gettable::FanSeries { id: format_id },
+            ));
+            || {}
+        },
+        (),
+    );
 
-    use_effect( move || { 
-        dispatch.apply(FanStoreActions::GetFanSeries(format_id));
-        return || {} 
-    });
-
-    match fan_series_option.as_ref() {
+    match fan_series_option {
         None => {
             html! {
                 <div>{"No server response"}</div>
@@ -53,7 +50,7 @@ pub fn ReadFanSeriesPage(props: &ReadFanSeriesPageProps) -> Html {
                     {"id: "} {data.id.to_owned()}
                     <h2>{"Sizes"}</h2>
                     <ul>
-                        { fan_sizes.iter().map(|fan_size| html! {
+                        { data.fan_sizes.iter().map(|fan_size| html! {
                             <li>
                                 <Link<Route> to={Route::GetFanSize { id: fan_size.id.clone() }}>
                                     {fan_size.id.clone()}{" Diameter: "}{fan_size.diameter}

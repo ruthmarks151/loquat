@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
 
@@ -11,6 +11,7 @@ pub enum FanType {
     #[serde(rename = "axial")]
     Axial,
 }
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct ParseFanTypeError;
 

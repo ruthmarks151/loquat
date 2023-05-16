@@ -12,9 +12,7 @@ impl<X> Interpolable<X, ()> for ()
 where
     X: Clone,
 {
-    fn interpolate_between(_low: (X, ()), _high: (X, ()), _target: &X) -> () {
-        ()
-    }
+    fn interpolate_between(_low: (X, ()), _high: (X, ()), _target: &X) {}
 }
 
 impl<X, Head, Tail> Interpolable<X, (Head, Tail)> for (Head, Tail)

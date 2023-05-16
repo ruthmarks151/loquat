@@ -35,6 +35,6 @@ impl ScalesWith<InletAirflow> for InletAirflow {
         if self != *from {
             panic!("Tried to scale an value to an one of its own type, but not from itself")
         }
-        (*to).clone()
+        *to
     }
 }

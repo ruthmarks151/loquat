@@ -92,13 +92,7 @@ fn augment_with_outlet_airflow(
 
     let corresponding_a2: OutletAirflow = a2.interpolate(&sp)?;
 
-    Ok(A1A2OperatingPoint::new(
-        fs,
-        ia,
-        corresponding_a2.clone(),
-        sp,
-        bhp,
-    ))
+    Ok(A1A2OperatingPoint::new(fs, ia, corresponding_a2, sp, bhp))
 }
 
 pub trait CanProduceA1A2Curve

@@ -44,10 +44,10 @@ pub async fn get(
         fan_series_id: record.fan_series_id.clone(),
         fan_series: FanSeries {
             id: record.fan_series_id,
-            fan_type: record
-                .fan_type[..]
+            fan_type: record.fan_type[..]
                 .try_into()
-                .map_err(|err| format!("Could not parse fan type: '{:?}'", err).to_string()).unwrap(),
+                .map_err(|err| format!("Could not parse fan type: '{:?}'", err))
+                .unwrap(),
             fan_sizes: (),
         },
         diameter: record.diameter,

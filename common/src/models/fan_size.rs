@@ -14,14 +14,14 @@ where
 
 impl<FanSeriesRepr: Eq + PartialEq> Eq for FanSize<FanSeriesRepr> {}
 
-impl<FanSeriesRepr> FanSize<FanSeriesRepr> {
-    pub fn flatten(self) -> (FanSize<()>, FanSeriesRepr) {
+impl<FanSeriesRepr> From<FanSize<FanSeriesRepr>> for (FanSize<()>, FanSeriesRepr) {
+    fn from(value: FanSize<FanSeriesRepr>) -> Self {
         let FanSize {
             id,
             fan_series_id,
             fan_series,
             diameter,
-        } = self;
+        } = value;
         (
             FanSize {
                 id,
@@ -31,5 +31,25 @@ impl<FanSeriesRepr> FanSize<FanSeriesRepr> {
             },
             fan_series,
         )
+    }
+}
+
+impl<FanSeriesRepr> From<(FanSize<()>, FanSeriesRepr)> for FanSize<FanSeriesRepr> {
+    fn from(value: (FanSize<()>, FanSeriesRepr)) -> Self {
+        let (
+            FanSize {
+                id,
+                fan_series_id,
+                fan_series: _,
+                diameter,
+            },
+            fan_series,
+        ) = value;
+        FanSize {
+            id,
+            fan_series_id,
+            fan_series,
+            diameter,
+        }
     }
 }

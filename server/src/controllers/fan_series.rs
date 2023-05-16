@@ -59,7 +59,7 @@ pub async fn get(
         Ok(Json(FanSeries {
             id: fan_series_id,
             fan_type,
-            fan_sizes: fan_sizes,
+            fan_sizes,
         }))
     } else {
         Err("Could not find Fan Series".to_string())

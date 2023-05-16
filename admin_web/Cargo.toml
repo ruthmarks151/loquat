@@ -11,9 +11,11 @@ console_error_panic_hook = "0.1.7"
 gloo-net = "0.2.5"
 gloo-console = "0.2.3"
 log = "0.4.17"
+serde = { version = "1.0", features = ["derive"] }
 wasm-bindgen-futures = "0.4.33"
 wasm-bindgen = "0.2.84"
 wasm-logger = "0.2.0"
 yew = { version = "0.20.0", features = ["csr"] }
 yew-router = "0.17.0"
 yewdux = "0.9"
+instant = { version = "0.1", features = [ "wasm-bindgen", "inaccurate" ] }

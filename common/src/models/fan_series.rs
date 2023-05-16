@@ -9,13 +9,13 @@ pub struct FanSeries<FanSizesRepr> {
     pub fan_sizes: FanSizesRepr,
 }
 
-impl<FanSizesRepr> FanSeries<FanSizesRepr> {
-    pub fn flatten(self) -> (FanSeries<()>, FanSizesRepr) {
+impl<FanSizesRepr> From<FanSeries<FanSizesRepr>> for (FanSeries<()>, FanSizesRepr) {
+    fn from(value: FanSeries<FanSizesRepr>) -> Self {
         let FanSeries {
             id,
             fan_type,
             fan_sizes,
-        } = self;
+        } = value;
         (
             FanSeries {
                 id,
@@ -24,5 +24,27 @@ impl<FanSizesRepr> FanSeries<FanSizesRepr> {
             },
             fan_sizes,
         )
+    }
+}
+// Jemar's first rust, it belongs in a museum
+// fn hi(fs: FanSeries<i32>) -> (FanSeries<()>, i32) {
+//     return fs.into();
+// }
+
+impl<FanSizesRepr> From<(FanSeries<()>, FanSizesRepr)> for FanSeries<FanSizesRepr> {
+    fn from(value: (FanSeries<()>, FanSizesRepr)) -> Self {
+        let (
+            FanSeries {
+                id,
+                fan_type,
+                fan_sizes: _,
+            },
+            fan_sizes,
+        ) = value;
+        FanSeries {
+            id,
+            fan_type,
+            fan_sizes,
+        }
     }
 }
