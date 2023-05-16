@@ -2,3 +2,4 @@
 /*/target
 /server/static
 .vscode/launch.json
+/server/.env
