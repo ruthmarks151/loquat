@@ -15,7 +15,7 @@ pub async fn index(Extension(pool): Extension<PgPool>) -> Result<Json<IndexRespo
             records
                 .into_iter()
                 .map(|record| FanSize {
-                    id: record.id,
+                    id: record.fan_size_id,
                     fan_series_id: record.fan_series_id,
                     fan_series: (),
                     diameter: record.diameter,
@@ -31,10 +31,10 @@ pub async fn get(
     Extension(pool): Extension<PgPool>,
 ) -> Result<Json<GetResponse>, String> {
     let fan_size = sqlx::query!(
-        "SELECT fan_sizes.id as fan_size_id, fan_series_id, fan_type, diameter, outlet_area
-             FROM fan_sizes 
-             JOIN fan_serieses ON fan_series_id = fan_serieses.id 
-             WHERE fan_sizes.id = $1",
+        "SELECT fan_sizes.fan_size_id, fan_sizes.fan_series_id, fan_type, diameter, outlet_area
+             FROM fan_sizes
+             JOIN fan_serieses ON fan_sizes.fan_series_id = fan_serieses.fan_series_id 
+             WHERE fan_size_id = $1",
         id
     )
     .fetch_one(&pool)

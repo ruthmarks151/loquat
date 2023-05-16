@@ -9,7 +9,7 @@ where
     pub id: String,
     pub fan_series_id: String,
     pub fan_series: FanSeriesRepr,
-    pub diameter: f64, // Inches
+    pub diameter: f64,    // Inches
     pub outlet_area: f64, // Square inches
 }
 

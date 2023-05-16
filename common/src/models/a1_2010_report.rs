@@ -1,33 +1,36 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     calculations::{
         core::FanCurve,
         standards::{A1OperatingPoint, CanFindA1OperatingPoint},
         units::{BrakeHorsepower, FanDiameter, FanSpeed, InletAirflow, StaticPressure},
     },
-    models::{fan_series::FanSeries, fan_size::FanSize},
+    models::fan_size::FanSize,
 };
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct A1Standard2010Parameters {
     pub rpm: f64,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct A1Standard2010Determination {
     pub cfm: f64,
     pub static_pressure: f64,
     pub brake_horsepower: f64,
 }
 
-#[derive(Clone, Debug)]
-pub struct A1Standard2010Report {
-    pub fan_size: FanSize<FanSeries<()>>,
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct A1Standard2010Report<FanSizeRepr> {
+    pub fan_size: FanSizeRepr,
+    pub fan_size_id: String,
     pub parameters: A1Standard2010Parameters,
-    pub determinations: [A1Standard2010Determination; 10],
+    pub determinations: Vec<A1Standard2010Determination>,
 }
 
-impl From<A1Standard2010Report> for FanCurve<A1OperatingPoint> {
-    fn from(value: A1Standard2010Report) -> Self {
+impl<R> From<A1Standard2010Report<R>> for FanCurve<A1OperatingPoint> {
+    fn from(value: A1Standard2010Report<R>) -> Self {
         value
             .determinations
             .iter()
@@ -42,13 +45,13 @@ impl From<A1Standard2010Report> for FanCurve<A1OperatingPoint> {
             .collect()
     }
 }
-impl From<A1Standard2010Report> for FanDiameter {
-    fn from(value: A1Standard2010Report) -> Self {
+impl<R> From<A1Standard2010Report<FanSize<R>>> for FanDiameter {
+    fn from(value: A1Standard2010Report<FanSize<R>>) -> Self {
         FanDiameter::from_inches(value.fan_size.diameter)
     }
 }
 
-impl CanFindA1OperatingPoint for A1Standard2010Report {}
+impl<R: Clone> CanFindA1OperatingPoint for A1Standard2010Report<FanSize<R>> {}
 
 #[cfg(test)]
 mod tests {
@@ -104,6 +107,7 @@ mod tests {
                     fan_sizes: (),
                 },
                 diameter: 27.0,
+                outlet_area: 100.0,
             },
 
             parameters: A1Standard2010Parameters { rpm: 1750.0 },

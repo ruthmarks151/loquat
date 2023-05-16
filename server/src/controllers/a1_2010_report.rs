@@ -1,0 +1,56 @@
+use axum::{extract::Path, Extension, Json};
+use itertools::Itertools;
+use sqlx::PgPool;
+
+use loquat_common::{
+    api::a1_2010_report::GetResponse,
+    models::{
+        A1Standard2010Determination, A1Standard2010Parameters, A1Standard2010Report, FanSeries,
+        FanSize,
+    },
+};
+
+pub async fn get(
+    Path(id): Path<String>,
+    Extension(pool): Extension<PgPool>,
+) -> Result<Json<GetResponse>, String> {
+    let report = sqlx::query!(
+      "SELECT fan_sizes.fan_size_id, fan_sizes.fan_series_id, fan_type, diameter, outlet_area, rpm, determinations
+           FROM a1_2010_reports
+           JOIN fan_sizes ON a1_2010_reports.fan_size_id = fan_sizes.fan_size_id
+           JOIN fan_serieses ON fan_sizes.fan_series_id = fan_serieses.fan_series_id
+           WHERE a1_2010_reports.a1_2010_report_id = $1",
+      id
+  )
+  .fetch_one(&pool)
+  .await
+  .map_err(|err| err.to_string())
+  .map(|record|
+     A1Standard2010Report {
+        fan_size_id: record.fan_size_id.clone(),
+        fan_size: FanSize {
+          id: record.fan_size_id,
+          fan_series_id: record.fan_series_id.clone(),
+          fan_series: FanSeries {
+              id: record.fan_series_id,
+              fan_type: record.fan_type[..]
+                  .try_into()
+                  .map_err(|err| format!("Could not parse fan type: '{:?}'", err))
+                  .expect("Could not parse fan type from DB"),
+              fan_sizes: (),
+          },
+          diameter: record.diameter,
+          outlet_area: record.outlet_area,
+      },
+        parameters: A1Standard2010Parameters {
+          rpm: record.rpm,
+        },
+        determinations: record.determinations.as_array().expect("Determinations JSONB was not an array!").into_iter().map(|el| { let obj = el.as_object().expect("Element of determinants was not an object!"); A1Standard2010Determination{
+            cfm: obj.get("cfm").and_then(|num| num.as_f64()).expect("Object has no CFM"),
+            static_pressure: obj.get("static_pressure").and_then(|num| num.as_f64()).expect("Object has no static_pressure"),
+            brake_horsepower: obj.get("brake_horsepower").and_then(|num| num.as_f64()).expect("Object has no brake_horsepower"),
+        } }).collect()
+    })?;
+
+    Ok(Json(report))
+}

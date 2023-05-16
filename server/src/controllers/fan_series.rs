@@ -8,7 +8,7 @@ use loquat_common::{
 };
 
 pub async fn index(Extension(pool): Extension<PgPool>) -> Result<Json<IndexResponse>, String> {
-    sqlx::query!("SELECT id as fan_series_id, fan_type FROM fan_serieses LIMIT 50")
+    sqlx::query!("SELECT fan_series_id, fan_type FROM fan_serieses LIMIT 50")
         .fetch_all(&pool)
         .await
         .map_err(|err| err.to_string())

@@ -7,9 +7,7 @@ use crate::{
     models::{fan_series::FanSeries, fan_size::FanSize},
 };
 
-use super::{
-    a1_2010_report::A1Standard2010Report, induced_flow_fan_size::InducedFlowFanSize, nozzle::Nozzle,
-};
+use super::{a1_2010_report::A1Standard2010Report, induced_flow_fan_size::InducedFlowFanSize};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct A2Standard2010Parameters {
@@ -23,21 +21,24 @@ pub struct A2Standard2010Determination {
 }
 
 #[derive(Clone, Debug)]
-pub struct A2Standard2010Report {
-    a1_report: A1Standard2010Report,
-    induced_flow_fan_size: InducedFlowFanSize<FanSize<FanSeries<()>>, Nozzle>,
+pub struct A2Standard2010Report<A1FanSizeRepr, A2InducedFanSizeRepr> {
+    a1_report: A1Standard2010Report<A1FanSizeRepr>,
+    induced_flow_fan_size: A2InducedFanSizeRepr,
+    induced_flow_fan_size_id: String,
     parameters: A2Standard2010Parameters,
     determinations: [A2Standard2010Determination; 10],
 }
 
-impl From<A2Standard2010Report> for FanCurve<A1OperatingPoint> {
-    fn from(value: A2Standard2010Report) -> Self {
+impl<A1Series, A2Size> From<A2Standard2010Report<FanSize<A1Series>, A2Size>>
+    for FanCurve<A1OperatingPoint>
+{
+    fn from(value: A2Standard2010Report<FanSize<A1Series>, A2Size>) -> Self {
         Self::from(value.a1_report)
     }
 }
 
-impl From<A2Standard2010Report> for FanCurve<A2OperatingPoint> {
-    fn from(value: A2Standard2010Report) -> Self {
+impl<A1Size, A2Size> From<A2Standard2010Report<A1Size, A2Size>> for FanCurve<A2OperatingPoint> {
+    fn from(value: A2Standard2010Report<A1Size, A2Size>) -> Self {
         value
             .determinations
             .iter()
@@ -52,8 +53,13 @@ impl From<A2Standard2010Report> for FanCurve<A2OperatingPoint> {
     }
 }
 
-impl From<A2Standard2010Report> for FanDiameter {
-    fn from(value: A2Standard2010Report) -> Self {
+impl<A1Size, A2Series, A2Nozzle>
+    From<A2Standard2010Report<A1Size, InducedFlowFanSize<FanSize<A2Series>, A2Nozzle>>>
+    for FanDiameter
+{
+    fn from(
+        value: A2Standard2010Report<A1Size, InducedFlowFanSize<FanSize<A2Series>, A2Nozzle>>,
+    ) -> Self {
         FanDiameter::from_inches(value.induced_flow_fan_size.fan_size.diameter)
     }
 }
@@ -64,7 +70,10 @@ impl From<A2Standard2010Report> for FanDiameter {
 //     }
 // }
 
-impl CanProduceA1A2Curve for A2Standard2010Report {}
+impl<A1Series: Clone, A2Series: Clone, A2Nozzle: Clone> CanProduceA1A2Curve
+    for A2Standard2010Report<FanSize<A1Series>, InducedFlowFanSize<FanSize<A2Series>, A2Nozzle>>
+{
+}
 
 #[cfg(test)]
 mod tests {

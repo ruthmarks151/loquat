@@ -1,5 +1,7 @@
 mod a1_2010_report;
-pub use a1_2010_report::A1Standard2010Report;
+pub use a1_2010_report::{
+    A1Standard2010Determination, A1Standard2010Parameters, A1Standard2010Report,
+};
 
 mod a2_2010_report;
 pub use a2_2010_report::A2Standard2010Report;
