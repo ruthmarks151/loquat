@@ -7,7 +7,7 @@ use axum::{
     Extension, Router,
 };
 use loquat_server::controllers;
-use sqlx::{Executor, PgPool};
+use sqlx::PgPool;
 use tower_http::services::{ServeDir, ServeFile};
 
 async fn handle_error(_err: std::io::Error) -> impl IntoResponse {
@@ -19,16 +19,10 @@ async fn axum(
     #[shuttle_static_folder::StaticFolder] static_folder: PathBuf,
     #[shuttle_shared_db::Postgres] pool: PgPool,
 ) -> shuttle_axum::ShuttleAxum {
-    pool.execute(include_str!("../schema.sql"))
-        .await
-        .expect("Schema didn't execute");
-
-    
     sqlx::migrate!()
         .run(&pool)
         .await
         .expect("Migrations failed :(");
-
 
     for statement in [
         "INSERT INTO fan_serieses (id, fan_type) VALUES ('SKYPLUME G2-ELLV DMF', 'centrifugal') ON CONFLICT DO NOTHING;",
