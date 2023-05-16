@@ -1369,6 +1369,8 @@ dependencies = [
  "axum",
  "itertools",
  "loquat_common",
+ "serde",
+ "serde_json",
  "shuttle-axum",
  "shuttle-runtime",
  "shuttle-shared-db",

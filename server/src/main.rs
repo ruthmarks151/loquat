@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use axum::{
     http::StatusCode,
     response::IntoResponse,
-    routing::{get, get_service},
+    routing::{get, get_service, post, put},
     Extension, Router,
 };
 use loquat_server::controllers;
@@ -51,6 +51,14 @@ async fn axum(
         .route(
             "/api/a1_2010_report/:id",
             get(controllers::a1_2010_report::get),
+        )
+        .route(
+            "/api/a1_2010_report/:id",
+            put(controllers::a1_2010_report::put),
+        )
+        .route(
+            "/api/a1_2010_report",
+            post(controllers::a1_2010_report::post),
         )
         .fallback_service(serve_dir)
         .layer(Extension(pool));

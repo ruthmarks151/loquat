@@ -4,10 +4,10 @@ use crate::{
         standards::{A1OperatingPoint, A2OperatingPoint, CanProduceA1A2Curve},
         units::{FanDiameter, FanSpeed, OutletAirflow, StaticPressure},
     },
-    models::{fan_series::FanSeries, fan_size::FanSize},
+    models::fan_size::FanSize,
 };
 
-use super::{a1_2010_report::A1Standard2010Report, induced_flow_fan_size::InducedFlowFanSize};
+use crate::models::{A1Standard2010Report, InducedFlowFanSize};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct A2Standard2010Parameters {
@@ -21,7 +21,7 @@ pub struct A2Standard2010Determination {
 }
 
 #[derive(Clone, Debug)]
-pub struct A2Standard2010Report<A1FanSizeRepr, A2InducedFanSizeRepr> {
+pub struct A2Standard2010Report<A1FanSizeRepr: 'static, A2InducedFanSizeRepr: 'static> {
     a1_report: A1Standard2010Report<A1FanSizeRepr>,
     induced_flow_fan_size: A2InducedFanSizeRepr,
     induced_flow_fan_size_id: String,

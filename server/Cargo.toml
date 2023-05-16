@@ -12,6 +12,9 @@ shuttle-runtime = "0.15.0"
 axum = "0.6.18"
 shuttle-axum = "0.15.0"
 itertools = "0.10.5"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0" }
+
 tokio = "1.28.0"
 shuttle-static-folder = "0.15.0"
 shuttle-shared-db = { version = "0.15.0", features = ["postgres"] }

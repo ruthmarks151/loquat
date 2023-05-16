@@ -1,3 +1,5 @@
+use std::any::{Any, TypeId};
+
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -21,8 +23,13 @@ pub struct A1Standard2010Determination {
     pub brake_horsepower: f64,
 }
 
+fn is_unit(t: &dyn Any) -> bool {
+    TypeId::of::<()>() == t.type_id()
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct A1Standard2010Report<FanSizeRepr> {
+pub struct A1Standard2010Report<FanSizeRepr: 'static> {
+    pub id: String,
+    #[serde(skip_serializing_if = "is_unit", default)]
     pub fan_size: FanSizeRepr,
     pub fan_size_id: String,
     pub parameters: A1Standard2010Parameters,
@@ -31,6 +38,7 @@ pub struct A1Standard2010Report<FanSizeRepr> {
 
 impl<R> From<A1Standard2010Report<R>> for FanCurve<A1OperatingPoint> {
     fn from(value: A1Standard2010Report<R>) -> Self {
+        let a = ();
         value
             .determinations
             .iter()
@@ -83,7 +91,7 @@ mod tests {
             (6.839, 0.0, 7.204),
         ];
         // raw_dets.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-        let test_points: [A1Standard2010Determination; 10] = raw_dets
+        let test_points: Vec<A1Standard2010Determination> = raw_dets
             .into_iter()
             .map(
                 |(static_pressure, cfm, brake_horsepower)| A1Standard2010Determination {
@@ -92,12 +100,12 @@ mod tests {
                     brake_horsepower,
                 },
             )
-            .collect::<Vec<_>>()
-            .try_into()
-            .unwrap();
+            .collect::<Vec<_>>();
 
         let fan_series_id = "SKYPLUME G1-ELLV DMF".to_string();
         let test_event = A1Standard2010Report {
+            id: "report-id-test".to_string(),
+            fan_size_id: "SKYPLUME G1-ELLV-18 DMF-150".to_string(),
             fan_size: FanSize {
                 id: "SKYPLUME G1-ELLV-18 DMF-150".to_string(),
                 fan_series_id: fan_series_id.clone(),
