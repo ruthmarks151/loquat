@@ -1,10 +1,184 @@
 {
   "db": "PostgreSQL",
+  "04afd70d27e2b668431eebb8f206160d87523b10129052355bdcd90ce30c3219": {
+    "describe": {
+      "columns": [
+        {
+          "name": "fan_series_id",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "fan_type",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT fan_series_id, fan_type FROM fan_serieses LIMIT 50"
+  },
+  "0dbc507ca4f908dd76ff4af7a90f237bad5dd1c6255c09c8cab184674c4122ff": {
+    "describe": {
+      "columns": [
+        {
+          "name": "fan_size_id",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "fan_series_id",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "fan_type",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "diameter",
+          "ordinal": 3,
+          "type_info": "Float8"
+        },
+        {
+          "name": "outlet_area",
+          "ordinal": 4,
+          "type_info": "Float8"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT fan_sizes.fan_size_id, fan_sizes.fan_series_id, fan_type, diameter, outlet_area\n             FROM fan_sizes\n             JOIN fan_serieses ON fan_sizes.fan_series_id = fan_serieses.fan_series_id \n             WHERE fan_size_id = $1"
+  },
+  "15406011e764d3faa19a21d702cceb1de94194345302acc9aeee1e3636f65a01": {
+    "describe": {
+      "columns": [
+        {
+          "name": "fan_size_id",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "diameter",
+          "ordinal": 1,
+          "type_info": "Float8"
+        },
+        {
+          "name": "fan_series_id",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "fan_type",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "outlet_area",
+          "ordinal": 4,
+          "type_info": "Float8"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT fan_sizes.fan_size_id, diameter, fan_sizes.fan_series_id, fan_type, outlet_area\n            FROM fan_serieses\n            JOIN fan_sizes\n            ON fan_sizes.fan_series_id = fan_serieses.fan_series_id\n            WHERE fan_serieses.fan_series_id = $1"
+  },
+  "3a15baf384f06b0daa0bc45cf79edcdf4908ebb572c9479b384a3a9e71678e73": {
+    "describe": {
+      "columns": [
+        {
+          "name": "a1_2010_report_id",
+          "ordinal": 0,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "fan_size_id",
+          "ordinal": 1,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "fan_series_id",
+          "ordinal": 2,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "fan_type",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "diameter",
+          "ordinal": 4,
+          "type_info": "Float8"
+        },
+        {
+          "name": "outlet_area",
+          "ordinal": 5,
+          "type_info": "Float8"
+        },
+        {
+          "name": "rpm",
+          "ordinal": 6,
+          "type_info": "Float8"
+        },
+        {
+          "name": "determinations",
+          "ordinal": 7,
+          "type_info": "Jsonb"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "SELECT a1_2010_report_id, fan_sizes.fan_size_id, fan_sizes.fan_series_id, fan_type, diameter, outlet_area, rpm, determinations\n           FROM a1_2010_reports\n           JOIN fan_sizes ON a1_2010_reports.fan_size_id = fan_sizes.fan_size_id\n           JOIN fan_serieses ON fan_sizes.fan_series_id = fan_serieses.fan_series_id\n           WHERE a1_2010_reports.a1_2010_report_id = $1"
+  },
   "4f7a2da8fcbe10f2d5a45857ce50469332630ec0314a6276c84bde2debd60bb2": {
     "describe": {
       "columns": [
         {
-          "name": "id",
+          "name": "fan_size_id",
           "ordinal": 0,
           "type_info": "Varchar"
         },
@@ -17,9 +191,15 @@
           "name": "diameter",
           "ordinal": 2,
           "type_info": "Float8"
+        },
+        {
+          "name": "outlet_area",
+          "ordinal": 3,
+          "type_info": "Float8"
         }
       ],
       "nullable": [
+        false,
         false,
         false,
         false
@@ -30,104 +210,43 @@
     },
     "query": "SELECT * FROM fan_sizes LIMIT 50"
   },
-  "520c1b8bd5aef11fe58f47b02e5603d49c69f4a19a7be1af65406ad792c34690": {
+  "58b8358f17163f95c36d19a42681c60218efcefb32c8277f38d783c1ea6ce908": {
     "describe": {
       "columns": [
         {
-          "name": "fan_series_id",
+          "name": "a1_2010_report_id",
           "ordinal": 0,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "fan_type",
-          "ordinal": 1,
           "type_info": "Varchar"
         }
       ],
       "nullable": [
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": []
-      }
-    },
-    "query": "SELECT id as fan_series_id, fan_type FROM fan_serieses LIMIT 50"
-  },
-  "8e184c0643843019782df35b8f8f734de79bf53022243200cf13e717c7970c0e": {
-    "describe": {
-      "columns": [
-        {
-          "name": "fan_size_id",
-          "ordinal": 0,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "diameter",
-          "ordinal": 1,
-          "type_info": "Float8"
-        },
-        {
-          "name": "fan_series_id",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "fan_type",
-          "ordinal": 3,
-          "type_info": "Varchar"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
         false
       ],
       "parameters": {
         "Left": [
-          "Text"
+          "Varchar",
+          "Varchar",
+          "Float8",
+          "Jsonb"
         ]
       }
     },
-    "query": "SELECT fan_sizes.id as fan_size_id, diameter, fan_serieses.id as fan_series_id, fan_type\n            FROM fan_serieses\n            JOIN fan_sizes\n            ON fan_sizes.fan_series_id = fan_serieses.id\n            WHERE fan_serieses.id = $1"
+    "query": "\n    INSERT INTO a1_2010_reports (a1_2010_report_id, fan_size_id,rpm, determinations) VALUES\n      ($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING a1_2010_report_id;;"
   },
-  "cd1921772a0fff903e425fc50f02533f6264d7b5371cead4285d483f224745e6": {
+  "d879363ccdaef92fa9966944bdc1a05722cdec686e9f49aef781032a6dce02bb": {
     "describe": {
-      "columns": [
-        {
-          "name": "fan_size_id",
-          "ordinal": 0,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "fan_series_id",
-          "ordinal": 1,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "fan_type",
-          "ordinal": 2,
-          "type_info": "Varchar"
-        },
-        {
-          "name": "diameter",
-          "ordinal": 3,
-          "type_info": "Float8"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false
-      ],
+      "columns": [],
+      "nullable": [],
       "parameters": {
         "Left": [
+          "Varchar",
+          "Varchar",
+          "Float8",
+          "Jsonb",
           "Text"
         ]
       }
     },
-    "query": "SELECT fan_sizes.id as fan_size_id, fan_series_id, fan_type, diameter\n             FROM fan_sizes \n             JOIN fan_serieses ON fan_series_id = fan_serieses.id \n             WHERE fan_sizes.id = $1"
+    "query": "\n      UPDATE a1_2010_reports SET\n        a1_2010_report_id = $1,\n        fan_size_id = $2, \n        rpm = $3,\n        determinations = $4 \n        WHERE a1_2010_report_id = $5"
   }
 }
