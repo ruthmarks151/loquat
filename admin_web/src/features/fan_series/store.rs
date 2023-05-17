@@ -42,6 +42,7 @@ impl Reducer<Store> for ApiResponseAction {
                     .insert(flat_series.id.clone(), flat_series);
                 og_state
             }
+            _ => og_state,
         }
     }
 }

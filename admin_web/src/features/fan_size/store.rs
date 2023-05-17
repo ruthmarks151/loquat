@@ -3,7 +3,7 @@ use std::{collections::HashMap, rc::Rc};
 use loquat_common::models::FanSize;
 use yewdux::{prelude, store::Reducer};
 
-use crate::api::store::ApiResponseAction;
+use crate::{api::store::ApiResponseAction, features::fan_series};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, prelude::Store)]
 pub struct Store {
@@ -29,6 +29,12 @@ impl Reducer<Store> for ApiResponseAction {
             ApiResponseAction::RecieveA1Report(report) => {
                 let (size, _series) = report.fan_size.into();
                 state.fan_sizes.insert(size.id.clone(), size);
+                og_state
+            }
+            ApiResponseAction::RecieveFanSizes(fan_sizes) => {
+                for fan_size in fan_sizes {
+                    state.fan_sizes.insert(fan_size.id.clone(), fan_size);
+                }
                 og_state
             }
             _ => og_state,

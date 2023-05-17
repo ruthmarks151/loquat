@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use loquat_common::models::FanSeries;
+use loquat_common::models::FanSize;
 use web_sys::HtmlInputElement;
 use yew::{
     function_component, html, use_callback, use_effect_with_deps, use_node_ref, Callback, Html,
@@ -9,33 +9,44 @@ use yew::{
 use yewdux::prelude::{use_selector, use_selector_with_deps, use_store};
 
 use crate::api::store::{RequestStatuses, Store as ApiStore};
-use crate::features::fan_series::Store;
+use crate::features::fan_size::Store;
 use crate::{
     api::store::{ApiRequestAction, GetParameters, Gettable},
     store::{select_all_fan_series, use_app_store_selector},
 };
 
 #[derive(Properties, PartialEq)]
-pub struct FanSeriesPickerProps {
+pub struct FanSizePickerProps {
+    pub fan_series_id: String,
     pub no_selection_label: String,
-    pub selection: Option<FanSeries<()>>,
-    pub on_select: Callback<Option<FanSeries<()>>, ()>,
+    pub selection: Option<FanSize<()>>,
+    pub on_select: Callback<Option<FanSize<()>>, ()>,
 }
 
 #[function_component]
-pub fn FanSeriesPicker(
-    FanSeriesPickerProps {
+pub fn FanSizePicker(
+    FanSizePickerProps {
+        fan_series_id,
         no_selection_label,
         selection,
         on_select,
-    }: &FanSeriesPickerProps,
+    }: &FanSizePickerProps,
 ) -> Html {
-    let gettable = Gettable::FanSeriesesIndex;
+    let gettable = Gettable::FanSizesIndex;
     let select_ref = use_node_ref();
 
     let (_state, dispatch) = use_store::<ApiStore>();
-    let fan_serieses: Rc<Vec<FanSeries<()>>> =
-        use_selector(|state: &Store| state.fan_serieses.values().cloned().collect::<Vec<_>>());
+    let fan_sizes: Rc<Vec<FanSize<()>>> = use_selector_with_deps(
+        move |state: &Store, deps| {
+            state
+                .fan_sizes
+                .values()
+                .filter(|size| size.fan_series_id.clone() == (deps).clone())
+                .cloned()
+                .collect::<Vec<_>>()
+        },
+        fan_series_id.clone(),
+    );
     let request_status = use_selector_with_deps(
         |store: &ApiStore, dep_gettable| {
             store
@@ -64,7 +75,7 @@ pub fn FanSeriesPicker(
     let selected_option: Html = match selection {
         Some(s) => html! {
           <option selected={true} value={s.id.clone()}>
-            {s.id.clone()}{" "}{s.fan_type.to_string()}
+            {s.id.clone()}{" "}
           </option>
         },
         None => html! {
@@ -73,35 +84,34 @@ pub fn FanSeriesPicker(
           </option>
         },
     };
-
     let selection_id = selection.as_ref().map_or("".to_string(), |s| s.id.clone());
-    let all_options: Html = fan_serieses
+    let all_options: Html = fan_sizes
         .iter()
         .filter(|opt| opt.id != selection_id)
         .map(|s| {
             html!(
               <option value={s.id.clone()}>
-                {s.id.clone()}{" "}{s.fan_type.to_string()}
+                {s.id.clone()}
               </option>
             )
         })
         .collect::<Html>();
 
     let select_callback = use_callback(
-        move |_evt: web_sys::Event, (on_select_dep, select_ref_dep, fan_serieses_ref)| {
+        move |_evt: web_sys::Event, (on_select_dep, select_ref_dep, fan_sizes_ref)| {
             let select_el = select_ref_dep
                 .cast::<HtmlInputElement>()
                 .expect("select_ref not attached to select element");
             let selected_id = select_el.value();
 
             on_select_dep.emit(
-                fan_serieses_ref
+                fan_sizes_ref
                     .iter()
                     .find(|fs| fs.id == selected_id)
                     .cloned(),
             );
         },
-        (on_select.clone(), select_ref.clone(), fan_serieses),
+        (on_select.clone(), select_ref.clone(), fan_sizes),
     );
 
     let options: Html = match request_status.as_ref() {
@@ -109,7 +119,7 @@ pub fn FanSeriesPicker(
             html! {
               <>
                 {selected_option}
-                <option>{"Error loading fan series"}</option>
+                <option>{"Error loading fan sizes..."}</option>
               </>
             }
         }

@@ -69,17 +69,13 @@ pub fn select_fan_series_by_id(
 }
 
 pub fn select_fan_size_by_id(state: &AppStore, id: &String) -> Option<FanSize<FanSeries<()>>> {
-    log::info!("Selecting size id: {:#?}", id);
-
     let fan_size = state.fan_size.fan_sizes.get(id)?.clone();
-    log::info!("Selected size: {:#?}", fan_size);
 
     let fan_series = state
         .fan_series
         .fan_serieses
         .get(&fan_size.fan_series_id)?
         .clone();
-    log::info!("Selected series: {:#?}", fan_series);
 
     Some((fan_size, fan_series).into())
 }

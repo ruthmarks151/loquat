@@ -54,6 +54,7 @@ pub enum ApiRequestAction {
 pub enum ApiResponseAction {
     RecieveFanSerieses(Vec<FanSeries<()>>),
     RecieveFanSeries(FanSeries<Vec<FanSize<()>>>),
+    RecieveFanSizes(Vec<FanSize<()>>),
     RecieveFanSize(FanSize<FanSeries<()>>),
     RecieveA1Report(A1Standard2010Report<FanSize<FanSeries<()>>>),
 }
@@ -62,6 +63,7 @@ pub enum ApiResponseAction {
 pub enum Gettable {
     FanSeriesesIndex,
     FanSeries { id: String },
+    FanSizesIndex,
     FanSize { id: String },
     A1Report { id: String },
 }
@@ -86,6 +88,11 @@ impl Reducer<Store> for ApiRequestAction {
                         gettable,
                         fan_series::get(id),
                         ApiResponseAction::RecieveFanSeries,
+                    ),
+                    Gettable::FanSizesIndex => handle_dispatches(
+                        gettable,
+                        fan_size::index(),
+                        ApiResponseAction::RecieveFanSizes,
                     ),
                     Gettable::FanSize { id } => handle_dispatches(
                         gettable,
