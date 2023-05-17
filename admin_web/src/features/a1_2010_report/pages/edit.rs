@@ -3,7 +3,7 @@ use std::iter;
 use std::ops::DerefMut;
 
 use crate::api::store::Store as ApiStore;
-use crate::features::a1_2010_report::components::DeterminationTable;
+use crate::features::a1_2010_report::components::{DeterminationTable, FloatInput};
 use crate::features::a1_2010_report::components::_DeterminationTableProps::headers;
 use crate::features::a1_2010_report::Store;
 use crate::features::fan_series::{self, FanSeriesPicker};
@@ -36,6 +36,8 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
     let report_option: Option<A1Standard2010Report<FanSize<FanSeries<()>>>> =
         use_app_store_selector_with_deps(select_a1_report, format_id.clone());
 
+    let rpm_inp: UseStateHandle<Option<f64>> =use_state(|| None);
+
     let determinations_table_data: UseStateHandle<Vec<[Option<f64>; 3]>> =
         use_state(|| vec![[None, None, None]]);
 
@@ -63,6 +65,19 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
             }
         },
         report_option.clone().map(|r| r.determinations),
+    );
+
+
+    use_effect_with_deps(
+        {
+            let rpm_inp_state = rpm_inp.clone().clone();
+            move |rpm_option: &Option<f64>| {
+                
+                
+                rpm_inp_state.set(rpm_option.clone());
+            }
+        },
+        report_option.clone().map(|r| r.parameters.rpm),
     );
 
     let fan_series_option = use_state(|| None);
@@ -138,6 +153,12 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         determinations_table_data.clone(),
     );
 
+    let on_rpm_input_change  = use_callback(
+        move |(_index, rpm_option), rpm_inp_state_ref| {
+            rpm_inp_state_ref.set(rpm_option)
+        },
+        rpm_inp.clone(),
+    );
     
 
     let picked_series_id: String = (*fan_series_option)
@@ -179,8 +200,16 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
             html! { 
                 <div>
                     <h1>{"Edit A1"}{ report.id.to_owned() }</h1>
+                    <label>{"Tested Series"}</label>
                     {series_picker}
+                    <label>{"Tested Size"}</label>
                     {size_picker}
+                    <label>{"Test RPM"}</label>
+                    <FloatInput
+                        value={(*rpm_inp).clone()}
+                        index={0}
+                        onchange={on_rpm_input_change}
+                    />
                     <DeterminationTable<3> 
                         onchange={on_determination_value_change} 
                         headers={headers_lables} 
