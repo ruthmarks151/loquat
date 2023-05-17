@@ -21,11 +21,9 @@ fn switch(routes: Route) -> Html {
 #[function_component(App)]
 fn app() -> Html {
     html! {
-        <div>
-            <BrowserRouter>
-                <Switch<Route> render={switch} />
-            </BrowserRouter>
-        </div>
+        <BrowserRouter>
+            <Switch<Route> render={switch} />
+        </BrowserRouter>
     }
 }
 
