@@ -74,7 +74,9 @@ pub async fn post(
         id,
         fan_size_id,
         parameters.rpm,
-        determinations.serialize(Serializer).map_err(|e| e.to_string())?
+        determinations
+            .serialize(Serializer)
+            .map_err(|e| e.to_string())?
     )
     .execute(&pool)
     .await
@@ -83,29 +85,31 @@ pub async fn post(
 }
 
 pub async fn put(
-  Extension(pool): Extension<PgPool>,
-  Json(A1Standard2010Report {
-      id,
-      fan_size: _,
-      fan_size_id,
-      parameters,
-      determinations,
-  }): Json<PostBody>,
+    Extension(pool): Extension<PgPool>,
+    Json(A1Standard2010Report {
+        id,
+        fan_size: _,
+        fan_size_id,
+        parameters,
+        determinations,
+    }): Json<PostBody>,
 ) -> Result<Json<GetResponse>, String> {
-  sqlx::query!(
-      "
+    sqlx::query!(
+        "
       UPDATE a1_2010_reports SET
         fan_size_id = $2, 
         rpm = $3,
         determinations = $4 
         WHERE a1_2010_report_id = $1",
-      id,
-      fan_size_id,
-      parameters.rpm,
-      determinations.serialize(Serializer).map_err(|e| e.to_string())?
-  )
-  .execute(&pool)
-  .await
-  .map_err(|e| e.to_string())?;
-  get(Path(id), Extension(pool)).await
+        id,
+        fan_size_id,
+        parameters.rpm,
+        determinations
+            .serialize(Serializer)
+            .map_err(|e| e.to_string())?
+    )
+    .execute(&pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    get(Path(id), Extension(pool)).await
 }

@@ -23,17 +23,61 @@ pub struct A1Standard2010Determination {
     pub brake_horsepower: f64,
 }
 
-fn is_unit(t: &dyn Any) -> bool {
-    TypeId::of::<()>() == t.type_id()
-}
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct A1Standard2010Report<FanSizeRepr: 'static> {
     pub id: String,
-    #[serde(skip_serializing_if = "is_unit", default)]
     pub fan_size: FanSizeRepr,
     pub fan_size_id: String,
     pub parameters: A1Standard2010Parameters,
     pub determinations: Vec<A1Standard2010Determination>,
+}
+
+impl<FanSizeRepr> From<(A1Standard2010Report<()>, FanSizeRepr)>
+    for A1Standard2010Report<FanSizeRepr>
+{
+    fn from(value: (A1Standard2010Report<()>, FanSizeRepr)) -> Self {
+        let (
+            A1Standard2010Report {
+                id,
+                fan_size: _,
+                fan_size_id,
+                parameters,
+                determinations,
+            },
+            fan_size,
+        ) = value;
+        A1Standard2010Report {
+            id,
+            fan_size,
+            fan_size_id,
+            parameters,
+            determinations,
+        }
+    }
+}
+
+impl<FanSizeRepr> From<A1Standard2010Report<FanSizeRepr>>
+    for (A1Standard2010Report<()>, FanSizeRepr)
+{
+    fn from(value: A1Standard2010Report<FanSizeRepr>) -> Self {
+        let A1Standard2010Report {
+            id,
+            fan_size,
+            fan_size_id,
+            parameters,
+            determinations,
+        } = value;
+        (
+            A1Standard2010Report {
+                id,
+                fan_size: (),
+                fan_size_id,
+                parameters,
+                determinations,
+            },
+            fan_size,
+        )
+    }
 }
 
 impl<R> From<A1Standard2010Report<R>> for FanCurve<A1OperatingPoint> {

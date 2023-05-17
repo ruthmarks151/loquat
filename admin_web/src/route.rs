@@ -12,4 +12,8 @@ pub enum Route {
     // Fan Sizes
     #[at("/fan_size/:id")]
     GetFanSize { id: String },
+    #[at("/a1_report/new")]
+    NewA1Report,
+    #[at("/a1_report/:id/edit")]
+    EditA1Report { id: String },
 }

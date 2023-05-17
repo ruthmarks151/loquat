@@ -1,7 +1,7 @@
 use std::{collections::HashMap, default, future::Future, rc::Rc};
 
 use instant::Instant;
-use loquat_common::models::{FanSeries, FanSize};
+use loquat_common::models::{A1Standard2010Report, FanSeries, FanSize};
 use serde;
 use yew::platform::spawn_local;
 use yewdux::{
@@ -11,7 +11,7 @@ use yewdux::{
 
 use crate::store::app_dispatch;
 
-use super::{fan_series, fan_size};
+use super::{a1_report, fan_series, fan_size};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, prelude::Store)]
 pub struct Store {
@@ -55,6 +55,7 @@ pub enum ApiResponseAction {
     RecieveFanSerieses(Vec<FanSeries<()>>),
     RecieveFanSeries(FanSeries<Vec<FanSize<()>>>),
     RecieveFanSize(FanSize<FanSeries<()>>),
+    RecieveA1Report(A1Standard2010Report<FanSize<FanSeries<()>>>),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -62,6 +63,7 @@ pub enum Gettable {
     FanSeriesesIndex,
     FanSeries { id: String },
     FanSize { id: String },
+    A1Report { id: String },
 }
 
 impl Reducer<Store> for ApiRequestAction {
@@ -89,6 +91,11 @@ impl Reducer<Store> for ApiRequestAction {
                         gettable,
                         fan_size::get(id),
                         ApiResponseAction::RecieveFanSize,
+                    ),
+                    Gettable::A1Report { id } => handle_dispatches(
+                        gettable,
+                        a1_report::get(id),
+                        ApiResponseAction::RecieveA1Report,
                     ),
                 }
             }

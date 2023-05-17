@@ -26,7 +26,11 @@ impl Reducer<Store> for ApiResponseAction {
                 state.fan_sizes.insert(size.id.clone(), size);
                 og_state
             }
-
+            ApiResponseAction::RecieveA1Report(report) => {
+                let (size, _series) = report.fan_size.into();
+                state.fan_sizes.insert(size.id.clone(), size);
+                og_state
+            }
             _ => og_state,
         }
     }

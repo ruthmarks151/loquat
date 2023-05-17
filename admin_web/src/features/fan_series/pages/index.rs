@@ -4,7 +4,7 @@ use instant::Instant;
 use loquat_common::models::FanSeries;
 use yew::{function_component, html, use_effect_with_deps, Html};
 use yew_router::prelude::Link;
-use yewdux::prelude::{use_selector, use_selector_with_deps, use_store};
+use yewdux::prelude::{use_selector_with_deps, use_store};
 
 use crate::{
     api::store::{ApiRequestAction, GetParameters, Gettable},
