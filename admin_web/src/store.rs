@@ -97,15 +97,9 @@ pub fn select_a1_report(
 
     if let Some(id) = maybe_id {
         let maybe_report = state.a1_report.reports.get(id);
-        log::info!("Maybe report {:?}", maybe_report);
-
         if let Some(report) = maybe_report {
-            log::info!("found report");
-
             let maybe_size = select_fan_size_by_id(state, &report.fan_size_id);
             if let Some(size) = maybe_size {
-                log::info!("Returning value");
-
                 return Some((report.clone(), size).into());
             }
         }

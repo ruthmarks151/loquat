@@ -9,6 +9,7 @@ use yew::{
 use yewdux::prelude::{use_selector, use_selector_with_deps, use_store};
 
 use crate::api::store::{RequestStatuses, Store as ApiStore};
+use crate::common::components::{Select, SelectOption};
 use crate::features::fan_size::Store;
 use crate::{
     api::store::{ApiRequestAction, GetParameters, Gettable},
@@ -71,96 +72,23 @@ pub fn FanSizePicker(
         },
         gettable,
     );
-
-    let selected_option: Html = match selection {
-        Some(s) => html! {
-          <option selected={true} value={s.id.clone()}>
-            {s.id.clone()}{" "}
-          </option>
-        },
-        None => html! {
-          <option selected={true} value={""}>
-            {no_selection_label}
-          </option>
-        },
-    };
-    let selection_id = selection.as_ref().map_or("".to_string(), |s| s.id.clone());
-    let all_options: Html = fan_sizes
-        .iter()
-        .filter(|opt| opt.id != selection_id)
-        .map(|s| {
-            html!(
-              <option value={s.id.clone()}>
-                {s.id.clone()}
-              </option>
-            )
-        })
-        .collect::<Html>();
-
-    let select_callback = use_callback(
-        move |_evt: web_sys::Event, (on_select_dep, select_ref_dep, fan_sizes_ref)| {
-            let select_el = select_ref_dep
-                .cast::<HtmlInputElement>()
-                .expect("select_ref not attached to select element");
-            let selected_id = select_el.value();
-
-            on_select_dep.emit(
-                fan_sizes_ref
-                    .iter()
-                    .find(|fs| fs.id == selected_id)
-                    .cloned(),
-            );
-        },
-        (on_select.clone(), select_ref.clone(), fan_sizes),
-    );
-
-    let options: Html = match request_status.as_ref() {
-        RequestStatuses::Error(_error_at, msg) => {
-            html! {
-              <>
-                {selected_option}
-                <option>{"Error loading fan sizes..."}</option>
-              </>
-            }
-        }
-        RequestStatuses::Unfetched => {
-            html! {<>
-                {selected_option}
-                <option>{"Loading..."}</option>
-                </>
-            }
-        }
-        RequestStatuses::Fetching(_fetched_at) => {
-            html! {
-              <>
-                {selected_option}
-                <option>{"Loading..."}</option>
-              </>
-            }
-        }
-        RequestStatuses::Refetching(_fetched_at, _last_status) => {
-            html! {
-              <>
-                {selected_option}
-                <option>{"Loading..."}</option>
-                {all_options}
-              </>
-            }
-        }
-
-        RequestStatuses::Fetched(fetched_at) => {
-            html! {
-              <>
-                {selected_option}
-                {all_options}
-              </>
-            }
-        }
-    };
-
     html! {
-      <select onchange={select_callback} ref={select_ref}>
-        {options}
-      </select>
+      <Select<FanSize<()>> 
+        no_selection_label={no_selection_label.clone()}
+        selection={selection.clone()}
+        on_select={on_select}
+        request_status={request_status}
+        selectables={fan_sizes}
+      />
+    }
+}
+
+impl SelectOption for FanSize<()> {
+    fn id(&self) -> String {
+        self.id.clone()
+    }
+
+    fn label(&self) -> String {
+      self.id.clone()
     }
 }

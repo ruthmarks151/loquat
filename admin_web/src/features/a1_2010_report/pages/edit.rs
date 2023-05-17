@@ -52,24 +52,23 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
 
     use_effect_with_deps(
         {
-            log::warn!("Preparing useEffect");
             let fan_size_option = fan_size_option.clone();
-            let existing_size= report_option.clone().map(|r| {
+            let existing_size = report_option.clone().map(|r| {
                 let (fan_size, _fan_series) = r.fan_size.into();
                 fan_size
             });
             move |fan_series_id: &Option<String>| {
-                log::warn!("Evaling useEffect {:?}", fan_series_id);
-
                 if let Some(selected_fan_series_id) = fan_series_id {
-
-                    if existing_size.as_ref().map_or(false, |es| *selected_fan_series_id == es.fan_series_id) {
+                    if existing_size
+                        .as_ref()
+                        .map_or(false, |es| *selected_fan_series_id == es.fan_series_id)
+                    {
                         fan_size_option.set(existing_size);
                     } else if let Some(picked_fan_size) = (*fan_size_option).clone() {
                         if picked_fan_size.fan_series_id != *selected_fan_series_id {
                             fan_size_option.set(None);
                         }
-                    } 
+                    }
                 }
             }
         },
