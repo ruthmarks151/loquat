@@ -1,6 +1,10 @@
 use std::borrow::Borrow;
+use std::iter;
+use std::ops::DerefMut;
 
 use crate::api::store::Store as ApiStore;
+use crate::features::a1_2010_report::components::DeterminationTable;
+use crate::features::a1_2010_report::components::_DeterminationTableProps::headers;
 use crate::features::a1_2010_report::Store;
 use crate::features::fan_series::{self, FanSeriesPicker};
 use crate::features::fan_size::{self, FanSizePicker};
@@ -10,7 +14,9 @@ use crate::{
     route::Route,
     store::{select_fan_series_by_id, use_app_store_selector, use_app_store_selector_with_deps},
 };
-use loquat_common::models::{A1Standard2010Report, FanSeries, FanSize};
+use loquat_common::models::{
+    A1Standard2010Determination, A1Standard2010Report, FanSeries, FanSize,
+};
 use yew::prelude::*;
 use yewdux::prelude::use_store;
 
@@ -29,6 +35,35 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
     let format_id = id.map(|id| id.replace("%20", " "));
     let report_option: Option<A1Standard2010Report<FanSize<FanSeries<()>>>> =
         use_app_store_selector_with_deps(select_a1_report, format_id.clone());
+
+    let determinations_table_data: UseStateHandle<Vec<[Option<f64>; 3]>> =
+        use_state(|| vec![[None, None, None]]);
+
+    use_effect_with_deps(
+        {
+            let determinations_table_data_state = determinations_table_data.clone().clone();
+            move |determinations_option: &Option<Vec<A1Standard2010Determination>>| {
+                let rows: Vec<[Option<f64>; 3]> = match determinations_option {
+                    Some(determinations) => determinations
+                        .iter()
+                        .map(|d| {
+                            [
+                                Some(d.static_pressure),
+                                Some(d.cfm),
+                                Some(d.brake_horsepower),
+                            ]
+                        })
+                        .chain(iter::repeat([None, None, None]))
+                        .take(10)
+                        .collect(),
+                    None => vec![[None, None, None]],
+                };
+                
+                determinations_table_data_state.set(rows);
+            }
+        },
+        report_option.clone().map(|r| r.determinations),
+    );
 
     let fan_series_option = use_state(|| None);
     let fan_size_option = use_state(|| None);
@@ -89,6 +124,22 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         },
         (),
     );
+
+    let on_determination_value_change: Callback<(usize, usize, Option<f64>)> = use_callback(
+        move |(row_index, col_index, value), determinations_table_data_state_ref| {
+            log::info!("Change in dep {:?}", (row_index, col_index, value));
+            let mut new_rows: Vec<[Option<f64>; 3]> =
+                (**determinations_table_data_state_ref).clone();
+            let row_ref: &mut [Option<f64>; 3] =
+                new_rows.get_mut(row_index).expect("Expected a row");
+            row_ref[col_index] = value;
+            determinations_table_data_state_ref.set(new_rows);
+        },
+        determinations_table_data.clone(),
+    );
+
+    
+
     let picked_series_id: String = (*fan_series_option)
         .clone()
         .map_or("".to_string(), |fs| fs.id);
@@ -120,10 +171,21 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
             }
         }
         Some(report) => {
-            html! { <div>
-                <h1>{"Edit A1"}{ report.id.to_owned() }</h1>
-                {series_picker}
-                {size_picker}
+            let headers_lables: [String; 3] = [
+                "Static Pressure (in. wg)".to_string(),
+                "Flow Rate (cfm)".to_string(),
+                "Brake Horsepower (hp)".to_string(),
+            ];
+            html! { 
+                <div>
+                    <h1>{"Edit A1"}{ report.id.to_owned() }</h1>
+                    {series_picker}
+                    {size_picker}
+                    <DeterminationTable<3> 
+                        onchange={on_determination_value_change} 
+                        headers={headers_lables} 
+                        rows={(*determinations_table_data).clone()} 
+                    />
                 </div>
             }
         }

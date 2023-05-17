@@ -22,6 +22,7 @@ pub struct A1Standard2010Determination {
     pub static_pressure: f64,
     pub brake_horsepower: f64,
 }
+impl Eq for A1Standard2010Determination {}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct A1Standard2010Report<FanSizeRepr: 'static> {

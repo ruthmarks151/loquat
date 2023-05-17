@@ -6,8 +6,7 @@ use yew::{
     Properties,
 };
 
-use crate::api::store::{RequestStatuses};
-
+use crate::api::store::RequestStatuses;
 
 pub trait SelectOption {
     fn id(&self) -> String;

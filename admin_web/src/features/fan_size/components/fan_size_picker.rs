@@ -73,7 +73,7 @@ pub fn FanSizePicker(
         gettable,
     );
     html! {
-      <Select<FanSize<()>> 
+      <Select<FanSize<()>>
         no_selection_label={no_selection_label.clone()}
         selection={selection.clone()}
         on_select={on_select}
@@ -89,6 +89,6 @@ impl SelectOption for FanSize<()> {
     }
 
     fn label(&self) -> String {
-      self.id.clone()
+        self.id.clone()
     }
 }

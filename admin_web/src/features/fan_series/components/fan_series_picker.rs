@@ -61,7 +61,7 @@ pub fn FanSeriesPicker(
     );
 
     html! {
-      <Select<FanSeries<()>> 
+      <Select<FanSeries<()>>
         no_selection_label={no_selection_label.clone()}
         selection={selection.clone()}
         on_select={on_select}
@@ -77,6 +77,6 @@ impl SelectOption for FanSeries<()> {
     }
 
     fn label(&self) -> String {
-      format!("{} {}", self.id.clone(), self.fan_type.to_string())
+        format!("{} {}", self.id.clone(), self.fan_type.to_string())
     }
 }
