@@ -4,7 +4,7 @@ use serde_json::value::Serializer;
 use sqlx::PgPool;
 
 use loquat_common::{
-    api::a1_2010_report::{GetResponse, PostBody},
+    api::a1_2010_report::{GetResponse, UpdateBody},
     models::{
         A1Standard2010Determination, A1Standard2010Parameters, A1Standard2010Report, FanSeries,
         FanSize,
@@ -59,54 +59,54 @@ pub async fn get(
 
 pub async fn post(
     Extension(pool): Extension<PgPool>,
-    Json(A1Standard2010Report {
+    Json(UpdateBody{
         id,
-        fan_size: _,
+        fan_rpm,
         fan_size_id,
-        parameters,
         determinations,
-    }): Json<PostBody>,
+    }): Json<UpdateBody>,
 ) -> Result<Json<GetResponse>, String> {
-    sqlx::query!(
+    let record = sqlx::query!(
         "
     INSERT INTO a1_2010_reports (a1_2010_report_id, fan_size_id,rpm, determinations) VALUES
-      ($1,$2,$3,$4) ON CONFLICT DO NOTHING;",
+      ($1,$2,$3,$4) ON CONFLICT DO NOTHING RETURNING a1_2010_report_id;;",
         id,
         fan_size_id,
-        parameters.rpm,
+        fan_rpm,
         determinations
             .serialize(Serializer)
             .map_err(|e| e.to_string())?
-    )
-    .execute(&pool)
+    ).fetch_one(&pool)
     .await
     .map_err(|e| e.to_string())?;
-    get(Path(id), Extension(pool)).await
+    get(Path(record.a1_2010_report_id), Extension(pool)).await
 }
 
 pub async fn put(
+    Path(id): Path<String>,
     Extension(pool): Extension<PgPool>,
-    Json(A1Standard2010Report {
-        id,
-        fan_size: _,
+    Json(UpdateBody{
+        id: new_id,
+        fan_rpm,
         fan_size_id,
-        parameters,
         determinations,
-    }): Json<PostBody>,
+    }): Json<UpdateBody>,
 ) -> Result<Json<GetResponse>, String> {
     sqlx::query!(
         "
       UPDATE a1_2010_reports SET
+        a1_2010_report_id = $1,
         fan_size_id = $2, 
         rpm = $3,
         determinations = $4 
-        WHERE a1_2010_report_id = $1",
-        id,
+        WHERE a1_2010_report_id = $5",
+        new_id,
         fan_size_id,
-        parameters.rpm,
+        fan_rpm,
         determinations
             .serialize(Serializer)
-            .map_err(|e| e.to_string())?
+            .map_err(|e| e.to_string())?,
+        id,
     )
     .execute(&pool)
     .await

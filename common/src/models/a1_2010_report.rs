@@ -1,5 +1,5 @@
 use std::any::{Any, TypeId};
-
+use std::hash::Hash;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -23,6 +23,13 @@ pub struct A1Standard2010Determination {
     pub brake_horsepower: f64,
 }
 impl Eq for A1Standard2010Determination {}
+impl Hash for A1Standard2010Determination {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.cfm.to_bits().hash(state);
+        self.static_pressure.to_bits().hash(state);
+        self.brake_horsepower.to_bits().hash(state);
+    }
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct A1Standard2010Report<FanSizeRepr: 'static> {

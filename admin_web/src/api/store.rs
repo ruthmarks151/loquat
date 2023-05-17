@@ -66,6 +66,9 @@ pub enum Gettable {
     FanSizesIndex,
     FanSize { id: String },
     A1Report { id: String },
+    PutA12010Report {   
+        body: loquat_common::api::a1_2010_report::UpdateBody
+    }
 }
 
 impl Reducer<Store> for ApiRequestAction {
@@ -102,6 +105,13 @@ impl Reducer<Store> for ApiRequestAction {
                     Gettable::A1Report { id } => handle_dispatches(
                         gettable,
                         a1_report::get(id),
+                        ApiResponseAction::RecieveA1Report,
+                    ),
+                    Gettable::PutA12010Report {   
+                        body
+                    } => handle_dispatches(
+                        gettable,
+                        a1_report::put(body),
                         ApiResponseAction::RecieveA1Report,
                     ),
                 }

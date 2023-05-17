@@ -1,5 +1,6 @@
 use std::iter;
 
+use loquat_common::api::a1_2010_report::UpdateBody;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yewdux::prelude::use_store;
@@ -123,6 +124,22 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         fan_series_option.as_ref().map(|fs| fs.id.clone()).into(),
     );
 
+    let handle_save_callback = {
+        use_callback(|_evt: MouseEvent, (dispatch, id_opt, fan_rpm_opt, determinations, fan_size_id_opt)| {
+            let fan_rpm = fan_rpm_opt.unwrap();
+            let fan_size_id = fan_size_id_opt.clone().unwrap();
+            let determinations = determinations.into_iter().map(|[static_pressure, cfm, brake_horsepower]| A1Standard2010Determination {
+                brake_horsepower: brake_horsepower.unwrap(), cfm: cfm.unwrap(), static_pressure: static_pressure.unwrap()
+            }).collect();
+
+            dispatch.apply(ApiRequestAction::Get(GetParameters {
+                ignore_cache: true,
+            }, Gettable::PutA12010Report { body: UpdateBody {
+                id: id_opt.clone().unwrap().to_string(), determinations, fan_rpm, fan_size_id
+            } }))
+        }, (dispatch.clone(), report_option.clone().map(|r| r.id), (*rpm_inp).clone(), (*determinations_table_data).clone(), (*fan_size_option).clone().map(|fs| fs.id) ))
+    };
+
     use_effect_with_deps(
         move |_| {
             if let Some(id) = format_id {
@@ -137,6 +154,7 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         },
         (),
     );
+
 
     let on_determination_value_change: Callback<(usize, usize, Option<f64>)> = use_callback(
         move |(row_index, col_index, value), determinations_table_data_state_ref| {
@@ -258,6 +276,7 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
                     <label><h3>{"Quick Paste Determination Points"}</h3></label>
                     <textarea ref={determination_paste_ref} rows={"13"} cols={"50"} onblur={on_determination_paste} >
                     </textarea>
+                    <button onclick={handle_save_callback}>{"Save"}</button>
                 </div>
             }
         }
