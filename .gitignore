@@ -3,3 +3,4 @@
 /server/static
 .vscode/launch.json
 /server/.env
+/server/Secrets.toml

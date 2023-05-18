@@ -88,7 +88,7 @@ mod tests {
             a1_2010_report::{A1Standard2010Determination, A1Standard2010Parameters},
             fan_series::FanSeries,
             fan_size::FanSize,
-            fan_type::FanType,
+            fan_type::FanType, Nozzle,
         },
     };
 
@@ -137,13 +137,16 @@ mod tests {
             id: "SKYPLUME G1-ELLV-18 DMF-150".to_string(),
             fan_series_id: fan_series_id.clone(),
             diameter: 27.0,
+            outlet_area: 2323.0,
             fan_series: fan_series,
         };
 
         let a1_test_event = A1Standard2010Report {
+            id: "Test Id".to_string(),
             fan_size: fan_size.clone(),
+            fan_size_id: "SKYPLUME G1-ELLV-18 DMF-150".to_string(),
             parameters: A1Standard2010Parameters { rpm: 1750.0 },
-            determinations: a1_determinations,
+            determinations: a1_determinations.into(),
         };
 
         let raw_a2_dets = [
@@ -172,6 +175,7 @@ mod tests {
 
         let a2_test_event = A2Standard2010Report {
             a1_report: a1_test_event,
+            induced_flow_fan_size_id: "induced_flow_fan_size".to_string(),
             induced_flow_fan_size: InducedFlowFanSize {
                 id: "ID".to_string(),
                 fan_size_id: fan_size.id.clone(),
