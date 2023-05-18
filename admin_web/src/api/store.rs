@@ -1,4 +1,4 @@
-use std::{collections::HashMap, default, future::Future, rc::Rc};
+use std::{collections::HashMap, future::Future, rc::Rc};
 
 use instant::Instant;
 use loquat_common::models::{A1Standard2010Report, FanSeries, FanSize};

@@ -88,7 +88,7 @@ pub fn Select<T: PartialEq + Clone + SelectOption + 'static>(
     );
 
     let options: Html = match request_status.as_ref() {
-        RequestStatuses::Error(_error_at, msg) => {
+        RequestStatuses::Error(_error_at, _msgg) => {
             html! {
               <>
                 {selected_option}
@@ -120,7 +120,7 @@ pub fn Select<T: PartialEq + Clone + SelectOption + 'static>(
             }
         }
 
-        RequestStatuses::Fetched(fetched_at) => {
+        RequestStatuses::Fetched(_fetched_at) => {
             html! {
               <>
                 {all_options}

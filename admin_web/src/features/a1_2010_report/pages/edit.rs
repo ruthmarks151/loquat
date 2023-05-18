@@ -1,7 +1,7 @@
-use std::iter;
+
 
 use loquat_common::api::a1_2010_report::UpdateBody;
-use serde::__private::de;
+
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yewdux::prelude::use_store;
@@ -14,8 +14,8 @@ use crate::api::store::Store as ApiStore;
 use crate::common::components::determination_table::FloatInput;
 use crate::features::a1_2010_report::components::A12010DeterminationTable;
 use crate::features::a1_2010_report::Store;
-use crate::features::fan_series::{self, FanSeriesPicker};
-use crate::features::fan_size::{self, FanSizePicker};
+use crate::features::fan_series::{FanSeriesPicker};
+use crate::features::fan_size::{FanSizePicker};
 use crate::store::select_a1_report;
 use crate::{
     api::store::{ApiRequestAction, GetParameters, Gettable},

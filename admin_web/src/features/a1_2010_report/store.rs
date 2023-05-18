@@ -1,6 +1,6 @@
 use std::{collections::HashMap, rc::Rc};
 
-use loquat_common::models::{A1Standard2010Report, FanSeries};
+use loquat_common::models::{A1Standard2010Report};
 use yewdux::{prelude, store::Reducer};
 
 use crate::api::store::ApiResponseAction;

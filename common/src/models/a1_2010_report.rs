@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::any::{Any, TypeId};
 use std::hash::Hash;
 
 use crate::{
@@ -90,7 +89,6 @@ impl<FanSizeRepr> From<A1Standard2010Report<FanSizeRepr>>
 
 impl<R> From<A1Standard2010Report<R>> for FanCurve<A1OperatingPoint> {
     fn from(value: A1Standard2010Report<R>) -> Self {
-        let a = ();
         value
             .determinations
             .iter()

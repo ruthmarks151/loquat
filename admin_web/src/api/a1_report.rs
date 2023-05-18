@@ -1,7 +1,7 @@
 use std::future::Future;
 
 use gloo_net::http;
-use loquat_common::{api::a1_2010_report, models::A1Standard2010Report};
+use loquat_common::api::a1_2010_report;
 use serde::Serialize;
 use serde_json::value::Serializer;
 

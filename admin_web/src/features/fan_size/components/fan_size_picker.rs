@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use loquat_common::models::FanSize;
 use yew::{
-    function_component, html, use_effect_with_deps, use_node_ref, Callback, Html, Properties,
+    function_component, html, use_effect_with_deps, Callback, Html, Properties,
 };
 use yewdux::prelude::{use_selector_with_deps, use_store};
 
@@ -29,7 +29,6 @@ pub fn FanSizePicker(
     }: &FanSizePickerProps,
 ) -> Html {
     let gettable = Gettable::FanSizesIndex;
-    let select_ref = use_node_ref();
 
     let (_state, dispatch) = use_store::<ApiStore>();
     let fan_sizes: Rc<Vec<FanSize<()>>> = use_selector_with_deps(

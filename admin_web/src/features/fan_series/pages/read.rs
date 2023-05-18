@@ -2,7 +2,7 @@ use crate::api::store::Store as ApiStore;
 use crate::{
     api::store::{ApiRequestAction, GetParameters, Gettable},
     route::Route,
-    store::{select_fan_series_by_id, use_app_store_selector, use_app_store_selector_with_deps},
+    store::{select_fan_series_by_id, use_app_store_selector_with_deps},
 };
 use loquat_common::models::{FanSeries, FanSize};
 use yew::prelude::*;
