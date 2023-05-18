@@ -1,7 +1,7 @@
-use std::{future::Future};
+use std::future::Future;
 
 use gloo_net::http;
-use loquat_common::{models::A1Standard2010Report, api::a1_2010_report};
+use loquat_common::{api::a1_2010_report, models::A1Standard2010Report};
 use serde::Serialize;
 use serde_json::value::Serializer;
 
@@ -23,7 +23,7 @@ pub fn put(
 }
 
 pub fn post(
-    payload:a1_2010_report::UpdateBody,
+    payload: a1_2010_report::UpdateBody,
 ) -> impl Future<Output = Result<gloo_net::http::Response, gloo_net::Error>> {
     http::Request::post(INDEX_REQ_URL)
         .header("Content-Type", "application/json")

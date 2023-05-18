@@ -88,7 +88,8 @@ mod tests {
             a1_2010_report::{A1Standard2010Determination, A1Standard2010Parameters},
             fan_series::FanSeries,
             fan_size::FanSize,
-            fan_type::FanType, Nozzle,
+            fan_type::FanType,
+            Nozzle,
         },
     };
 

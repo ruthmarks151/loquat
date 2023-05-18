@@ -3,7 +3,7 @@ use std::{collections::HashMap, rc::Rc};
 use loquat_common::models::FanSize;
 use yewdux::{prelude, store::Reducer};
 
-use crate::{api::store::ApiResponseAction, features::fan_series};
+use crate::api::store::ApiResponseAction;
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, prelude::Store)]
 pub struct Store {

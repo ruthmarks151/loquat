@@ -1,20 +1,13 @@
 use std::rc::Rc;
 
 use loquat_common::models::FanSeries;
-use web_sys::HtmlInputElement;
-use yew::{
-    function_component, html, use_callback, use_effect_with_deps, use_node_ref, Callback, Html,
-    Properties,
-};
+use yew::{function_component, html, use_effect_with_deps, Callback, Html, Properties};
 use yewdux::prelude::{use_selector, use_selector_with_deps, use_store};
 
-use crate::api::store::{RequestStatuses, Store as ApiStore};
-use crate::common::components::{Select, SelectOption};
+use crate::api::store::Store as ApiStore;
+use crate::api::store::{ApiRequestAction, GetParameters, Gettable};
+use crate::common::components::{select::SelectOption, Select};
 use crate::features::fan_series::Store;
-use crate::{
-    api::store::{ApiRequestAction, GetParameters, Gettable},
-    store::{select_all_fan_series, use_app_store_selector},
-};
 
 #[derive(Properties, PartialEq)]
 pub struct FanSeriesPickerProps {

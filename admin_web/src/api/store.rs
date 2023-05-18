@@ -62,13 +62,19 @@ pub enum ApiResponseAction {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Gettable {
     FanSeriesesIndex,
-    FanSeries { id: String },
+    FanSeries {
+        id: String,
+    },
     FanSizesIndex,
-    FanSize { id: String },
-    A1Report { id: String },
-    PutA12010Report {   
-        body: loquat_common::api::a1_2010_report::UpdateBody
-    }
+    FanSize {
+        id: String,
+    },
+    A1Report {
+        id: String,
+    },
+    PutA12010Report {
+        body: loquat_common::api::a1_2010_report::UpdateBody,
+    },
 }
 
 impl Reducer<Store> for ApiRequestAction {
@@ -107,9 +113,7 @@ impl Reducer<Store> for ApiRequestAction {
                         a1_report::get(id),
                         ApiResponseAction::RecieveA1Report,
                     ),
-                    Gettable::PutA12010Report {   
-                        body
-                    } => handle_dispatches(
+                    Gettable::PutA12010Report { body } => handle_dispatches(
                         gettable,
                         a1_report::put(body),
                         ApiResponseAction::RecieveA1Report,

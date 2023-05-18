@@ -59,7 +59,7 @@ pub async fn get(
 
 pub async fn post(
     Extension(pool): Extension<PgPool>,
-    Json(UpdateBody{
+    Json(UpdateBody {
         id,
         fan_rpm,
         fan_size_id,
@@ -76,7 +76,8 @@ pub async fn post(
         determinations
             .serialize(Serializer)
             .map_err(|e| e.to_string())?
-    ).fetch_one(&pool)
+    )
+    .fetch_one(&pool)
     .await
     .map_err(|e| e.to_string())?;
     get(Path(record.a1_2010_report_id), Extension(pool)).await
@@ -85,7 +86,7 @@ pub async fn post(
 pub async fn put(
     Path(id): Path<String>,
     Extension(pool): Extension<PgPool>,
-    Json(UpdateBody{
+    Json(UpdateBody {
         id: new_id,
         fan_rpm,
         fan_size_id,

@@ -1,6 +1,7 @@
 use std::iter;
 
 use loquat_common::api::a1_2010_report::UpdateBody;
+use serde::__private::de;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yewdux::prelude::use_store;
@@ -10,7 +11,8 @@ use loquat_common::models::{
 };
 
 use crate::api::store::Store as ApiStore;
-use crate::features::a1_2010_report::components::{DeterminationTable, FloatInput};
+use crate::common::components::determination_table::FloatInput;
+use crate::features::a1_2010_report::components::A12010DeterminationTable;
 use crate::features::a1_2010_report::Store;
 use crate::features::fan_series::{self, FanSeriesPicker};
 use crate::features::fan_size::{self, FanSizePicker};
@@ -19,8 +21,6 @@ use crate::{
     api::store::{ApiRequestAction, GetParameters, Gettable},
     store::use_app_store_selector_with_deps,
 };
-
-
 
 #[derive(Properties, PartialEq)]
 pub struct EditA1PageProps {
@@ -38,32 +38,32 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
     let report_option: Option<A1Standard2010Report<FanSize<FanSeries<()>>>> =
         use_app_store_selector_with_deps(select_a1_report, format_id.clone());
 
-    let rpm_inp: UseStateHandle<Option<f64>> = use_state(|| None);
+    let rpm_inp: UseStateHandle<String> = use_state(|| "".to_string());
 
-    let determinations_table_data: UseStateHandle<Vec<[Option<f64>; 3]>> =
-        use_state(|| vec![[None, None, None]]);
+    let determinations_table_data: UseStateHandle<Vec<[String; 3]>> = use_state(|| vec![]);
 
     use_effect_with_deps(
         {
             let determinations_table_data_state = determinations_table_data.clone().clone();
             move |determinations_option: &Option<Vec<A1Standard2010Determination>>| {
-                let rows: Vec<[Option<f64>; 3]> = match determinations_option {
-                    Some(determinations) => determinations
-                        .iter()
-                        .map(|d| {
-                            [
-                                Some(d.static_pressure),
-                                Some(d.cfm),
-                                Some(d.brake_horsepower),
-                            ]
+                log::info!("Effect updating data! ");
+                determinations_table_data_state.set(
+                    determinations_option
+                        .clone()
+                        .map(|det_vec| {
+                            det_vec
+                                .into_iter()
+                                .map(|det| {
+                                    [
+                                        det.static_pressure.to_string(),
+                                        det.cfm.to_string(),
+                                        det.brake_horsepower.to_string(),
+                                    ]
+                                })
+                                .collect()
                         })
-                        .chain(iter::repeat([None, None, None]))
-                        .take(10)
-                        .collect(),
-                    None => vec![[None, None, None]],
-                };
-
-                determinations_table_data_state.set(rows);
+                        .unwrap_or(vec![]),
+                );
             }
         },
         report_option.clone().map(|r| r.determinations),
@@ -73,7 +73,7 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         {
             let rpm_inp_state = rpm_inp.clone().clone();
             move |rpm_option: &Option<f64>| {
-                rpm_inp_state.set(rpm_option.clone());
+                rpm_inp_state.set(rpm_option.map_or("".to_string(), |r| r.to_string()));
             }
         },
         report_option.clone().map(|r| r.parameters.rpm),
@@ -125,19 +125,39 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
     );
 
     let handle_save_callback = {
-        use_callback(|_evt: MouseEvent, (dispatch, id_opt, fan_rpm_opt, determinations, fan_size_id_opt)| {
-            let fan_rpm = fan_rpm_opt.unwrap();
-            let fan_size_id = fan_size_id_opt.clone().unwrap();
-            let determinations = determinations.into_iter().map(|[static_pressure, cfm, brake_horsepower]| A1Standard2010Determination {
-                brake_horsepower: brake_horsepower.unwrap(), cfm: cfm.unwrap(), static_pressure: static_pressure.unwrap()
-            }).collect();
+        use_callback(
+            |_evt: MouseEvent,
+             (dispatch, id_opt, fan_rpm_opt, determinations_vec, fan_size_id_opt)| {
+                let update_body: Option<UpdateBody> = (|| {
+                    let fan_rpm = (*fan_rpm_opt).parse::<f64>().ok()?;
+                    let fan_size_id = fan_size_id_opt.clone()?;
+                    let parsed_determinations_vec = determinations_vec.into_iter().filter_map(|[static_pressure, cfm, brake_horsepower]| -> Option<A1Standard2010Determination> 
+                    { Some(A1Standard2010Determination {
+                    brake_horsepower: brake_horsepower.parse().ok()?, cfm: cfm.parse().ok()?, static_pressure: static_pressure.parse().ok()?
+                })}).collect();
+                    Some(UpdateBody {
+                        id: id_opt.clone().unwrap().to_string(),
+                        determinations: parsed_determinations_vec,
+                        fan_rpm,
+                        fan_size_id,
+                    })
+                })();
 
-            dispatch.apply(ApiRequestAction::Get(GetParameters {
-                ignore_cache: true,
-            }, Gettable::PutA12010Report { body: UpdateBody {
-                id: id_opt.clone().unwrap().to_string(), determinations, fan_rpm, fan_size_id
-            } }))
-        }, (dispatch.clone(), report_option.clone().map(|r| r.id), (*rpm_inp).clone(), (*determinations_table_data).clone(), (*fan_size_option).clone().map(|fs| fs.id) ))
+                dispatch.apply(ApiRequestAction::Get(
+                    GetParameters { ignore_cache: true },
+                    Gettable::PutA12010Report {
+                        body: update_body.unwrap(),
+                    },
+                ))
+            },
+            (
+                dispatch.clone(),
+                report_option.clone().map(|r| r.id),
+                (*rpm_inp).clone(),
+                (*determinations_table_data).clone(),
+                (*fan_size_option).clone().map(|fs| fs.id),
+            ),
+        )
     };
 
     use_effect_with_deps(
@@ -155,19 +175,13 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         (),
     );
 
-
-    let on_determination_value_change: Callback<(usize, usize, Option<f64>)> = use_callback(
-        move |(row_index, col_index, value), determinations_table_data_state_ref| {
-            log::info!("Change in dep {:?}", (row_index, col_index, value));
-            let mut new_rows: Vec<[Option<f64>; 3]> =
-                (**determinations_table_data_state_ref).clone();
-            let row_ref: &mut [Option<f64>; 3] =
-                new_rows.get_mut(row_index).expect("Expected a row");
-            row_ref[col_index] = value;
-            determinations_table_data_state_ref.set(new_rows);
-        },
-        determinations_table_data.clone(),
-    );
+    let on_dets_input_change = {
+        let determinations_table_data = determinations_table_data.clone();
+        use_callback(
+            move |data: [[String; 3]; 10], _dets| determinations_table_data.set(data.to_vec()),
+            (),
+        )
+    };
 
     let on_rpm_input_change = use_callback(
         move |(_index, rpm_option), rpm_inp_state_ref| rpm_inp_state_ref.set(rpm_option),
@@ -196,22 +210,26 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
                 if text_rows.next() != Some("(in. wg) (in. wg) (in. wg) (cfm) (hp) - (%) (%)") {
                     log::warn!("Second header doesn't match")
                 }
-                let grid: Vec<[Option<f64>; 3]> = text_rows
+                let grid: Vec<[String; 3]> = text_rows
                     .map(|row_str| {
                         let split_row = row_str.split_whitespace().collect::<Vec<_>>();
                         if split_row.len() != 9 {
                             log::warn!("Row length isn't right");
-                            [None, None, None]
+                            ["".to_string(), "".to_string(), "".to_string()]
                         } else {
                             [
-                                split_row.get(3).and_then(|s| s.parse::<f64>().ok()),
-                                split_row.get(4).and_then(|s| s.parse::<f64>().ok()),
-                                split_row.get(5).and_then(|s| s.parse::<f64>().ok()),
+                                split_row.get(3).map_or("".to_string(), |s| s.to_string()),
+                                split_row.get(4).map_or("".to_string(), |s| s.to_string()),
+                                split_row.get(5).map_or("".to_string(), |s| s.to_string()),
                             ]
                         }
                     })
                     .collect::<Vec<_>>()
                     .clone();
+                if grid.len() != 12 {
+                    log::warn!("Paste doesn't have the correct number of rows");
+                    return;
+                }
                 determinations_table_data.set(grid);
             },
             (),
@@ -246,11 +264,6 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
             }
         }
         Some(report) => {
-            let headers_lables: [String; 3] = [
-                "Static Pressure (in. wg)".to_string(),
-                "Flow Rate (cfm)".to_string(),
-                "Brake Horsepower (hp)".to_string(),
-            ];
             html! {
                 <div>
                     <h1>{"Test No. "}{ report.id.to_owned() }</h1>
@@ -268,10 +281,9 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
                         />
                     </div>
                     <label><h2>{"Determination Points"}</h2></label>
-                    <DeterminationTable<3>
-                        onchange={on_determination_value_change}
-                        headers={headers_lables}
-                        rows={(*determinations_table_data).clone()}
+                    <A12010DeterminationTable 
+                        fields={(*determinations_table_data).clone()} 
+                        onchange={on_dets_input_change} 
                     />
                     <label><h3>{"Quick Paste Determination Points"}</h3></label>
                     <textarea ref={determination_paste_ref} rows={"13"} cols={"50"} onblur={on_determination_paste} >

@@ -8,7 +8,7 @@ use axum::{
 };
 use loquat_server::controllers;
 use shuttle_secrets::SecretStore;
-use sqlx::{PgPool, migrate::Migrator};
+use sqlx::{migrate::Migrator, PgPool};
 use tower_http::services::{ServeDir, ServeFile};
 
 async fn handle_error(_err: std::io::Error) -> impl IntoResponse {
@@ -21,9 +21,11 @@ static MIGRATOR: Migrator = sqlx::migrate!();
 async fn axum(
     #[shuttle_secrets::Secrets] _secret_store: SecretStore,
     #[shuttle_static_folder::StaticFolder] static_folder: PathBuf,
-    #[shuttle_aws_rds::Postgres(local_uri="postgres://{secrets.PG_USER}:{secrets.PG_PASSWORD}@{secrets.PG_ROUTE}")] pool: PgPool,
+    #[shuttle_aws_rds::Postgres(
+        local_uri = "postgres://{secrets.PG_USER}:{secrets.PG_PASSWORD}@{secrets.PG_ROUTE}"
+    )]
+    pool: PgPool,
 ) -> shuttle_axum::ShuttleAxum {
-
     MIGRATOR
         .run(&pool)
         .await

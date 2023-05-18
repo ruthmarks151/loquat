@@ -1,6 +1,6 @@
+use serde::{Deserialize, Serialize};
 use std::any::{Any, TypeId};
 use std::hash::Hash;
-use serde::{Deserialize, Serialize};
 
 use crate::{
     calculations::{
