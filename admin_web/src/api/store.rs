@@ -75,6 +75,9 @@ pub enum Gettable {
     PutA12010Report {
         body: loquat_common::api::a1_2010_report::UpdateBody,
     },
+    PostA12010Report {
+        body: loquat_common::api::a1_2010_report::UpdateBody,
+    },
 }
 
 impl Reducer<Store> for ApiRequestAction {
@@ -116,6 +119,11 @@ impl Reducer<Store> for ApiRequestAction {
                     Gettable::PutA12010Report { body } => handle_dispatches(
                         gettable,
                         a1_report::put(body),
+                        ApiResponseAction::RecieveA1Report,
+                    ),
+                    Gettable::PostA12010Report { body } => handle_dispatches(
+                        gettable,
+                        a1_report::post(body),
                         ApiResponseAction::RecieveA1Report,
                     ),
                 }

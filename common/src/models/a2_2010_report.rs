@@ -24,6 +24,7 @@ pub struct A2Standard2010Determination {
 pub struct A2Standard2010Report<A1FanSizeRepr: 'static, A2InducedFanSizeRepr: 'static> {
     a1_report: A1Standard2010Report<A1FanSizeRepr>,
     induced_flow_fan_size: A2InducedFanSizeRepr,
+    #[allow(dead_code, unused_attributes)] // this is unused because these don't really exist yet
     induced_flow_fan_size_id: String,
     parameters: A2Standard2010Parameters,
     determinations: [A2Standard2010Determination; 10],
