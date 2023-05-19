@@ -1,8 +1,5 @@
-use std::ops::Deref;
-
 use loquat_common::api::a1_2010_report::UpdateBody;
 
-use web_sys::HtmlInputElement;
 use yew::prelude::*;
 use yewdux::prelude::use_store;
 
@@ -11,10 +8,9 @@ use loquat_common::models::{
 };
 
 use crate::api::store::Store as ApiStore;
-use crate::common::components::determination_table::FloatInput;
+use crate::common::components::{DeterminationsPasteTextArea, FanSeriesAndSizePicker};
+use crate::common::components::determination_table::TaggedInput;
 use crate::features::a1_2010_report::components::A12010DeterminationTable;
-use crate::features::fan_series::FanSeriesPicker;
-use crate::features::fan_size::FanSizePicker;
 use crate::store::select_a1_report;
 use crate::{
     api::store::{ApiRequestAction, GetParameters, Gettable},
@@ -31,14 +27,33 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
     let (_state, api_dispatch) = use_store::<ApiStore>();
 
     let report_id = props.id.as_ref().map(|id| id.replace("%20", " "));
-    let maybe_report: Option<A1Standard2010Report<FanSize<FanSeries<()>>>> =
-        use_app_store_selector_with_deps(select_a1_report, report_id.clone());
-
+    let report_id_state: UseStateHandle<String> = {
+        let report_id = report_id.clone();
+        use_state(move || report_id.map_or("".to_string(), |id| id.to_string()))
+    };
     let picked_fan_series_state: UseStateHandle<Option<FanSeries<()>>> = use_state(|| None);
     let picked_fan_size_state: UseStateHandle<Option<FanSize<()>>> = use_state(|| None);
     let entered_rpm_state: UseStateHandle<String> = use_state(|| "".to_string());
     let determinations_state: UseStateHandle<Vec<[String; 3]>> = use_state(|| vec![]);
 
+    let maybe_report: Option<A1Standard2010Report<FanSize<FanSeries<()>>>> =
+        use_app_store_selector_with_deps(select_a1_report, report_id.clone());
+    use_effect_with_deps(
+        {
+            let api_dispatch = api_dispatch.clone();
+            move |report_id: &Option<String>| {
+            if let Some(id) = report_id {
+                api_dispatch.apply(ApiRequestAction::Get(
+                    GetParameters {
+                        ignore_cache: false,
+                    },
+                    Gettable::A1Report { id: id.clone() },
+                ));
+            }
+            || {}
+        }},
+        report_id,
+    );
     // Reset fields for new report
     use_effect_with_deps(
         {
@@ -78,35 +93,6 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         maybe_report.clone(),
     );
 
-    // On Fan series change, handele updating the state dropdown
-    use_effect_with_deps(
-        {
-            let picked_fan_size_state = picked_fan_size_state.clone();
-            let reports_maybe_size = maybe_report.clone().map(|r| {
-                let (fan_size, _fan_series) = r.fan_size.into();
-                fan_size
-            });
-            move |fan_series_id: &Option<String>| {
-                if let Some(selected_fan_series_id) = fan_series_id {
-                    if reports_maybe_size
-                        .as_ref()
-                        .map_or(false, |es| *selected_fan_series_id == es.fan_series_id)
-                    {
-                        picked_fan_size_state.set(reports_maybe_size);
-                    } else if let Some(picked_fan_size) = (*picked_fan_size_state).clone() {
-                        if picked_fan_size.fan_series_id != *selected_fan_series_id {
-                            picked_fan_size_state.set(None);
-                        }
-                    }
-                }
-            }
-        },
-        picked_fan_series_state
-            .as_ref()
-            .map(|fs| fs.id.clone())
-            .into(),
-    );
-
     let handle_save_callback = {
         use_callback(
             |_evt: MouseEvent,
@@ -143,25 +129,10 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         )
     };
 
-    use_effect_with_deps(
-        move |_| {
-            if let Some(id) = report_id {
-                api_dispatch.apply(ApiRequestAction::Get(
-                    GetParameters {
-                        ignore_cache: false,
-                    },
-                    Gettable::A1Report { id },
-                ));
-            }
-            || {}
-        },
-        (),
-    );
-
-    let on_dets_input_change = {
-        let determinations_table_setter = determinations_state.setter();
+    let on_report_id_change = {
+        let report_id_setter = report_id_state.setter();
         use_callback(
-            move |data: [[String; 3]; 10], _dets| determinations_table_setter.set(data.to_vec()),
+            move |(_index, report_id), _deps| report_id_setter.set(report_id),
             (),
         )
     };
@@ -174,122 +145,83 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         )
     };
 
-    let determination_paste_ref = use_node_ref();
-    let on_determination_paste = {
-        let determination_paste_ref = determination_paste_ref.clone();
-        let determinations_setter = determinations_state.setter();
+    let on_dets_input_change = {
+        let determinations_table_setter = determinations_state.setter();
         use_callback(
-            move |_evt, _dep| {
-                let input = determination_paste_ref
-                    .cast::<HtmlInputElement>()
-                    .expect("input_ref not attached to input element");
-
-                let input_val: String = input.value();
-                let mut text_rows = input_val.split("\n");
-                if text_rows.next() != Some("Det. No. P t P v P s Q H K p η t η s") {
-                    log::warn!("First header doesn't match")
-                }
-                if text_rows.next() != Some("(in. wg) (in. wg) (in. wg) (cfm) (hp) - (%) (%)") {
-                    log::warn!("Second header doesn't match")
-                }
-                let grid: Vec<[String; 3]> = text_rows
-                    .map(|row_str| {
-                        let split_row = row_str.split_whitespace().collect::<Vec<_>>();
-                        if split_row.len() != 9 {
-                            log::warn!("Row length isn't right");
-                            ["".to_string(), "".to_string(), "".to_string()]
-                        } else {
-                            [
-                                split_row.get(3).map_or("".to_string(), |s| s.to_string()),
-                                split_row.get(4).map_or("".to_string(), |s| s.to_string()),
-                                split_row.get(5).map_or("".to_string(), |s| s.to_string()),
-                            ]
-                        }
-                    })
-                    .collect::<Vec<_>>()
-                    .clone();
-                if grid.len() != 12 {
-                    log::warn!("Paste doesn't have the correct number of rows");
-                    return;
-                }
-                determinations_setter.set(grid);
-            },
+            move |data: [[String; 3]; 10], _dets| determinations_table_setter.set(data.to_vec()),
             (),
         )
     };
 
-    let series_picker = {
-        let set_picked_fan_series = picked_fan_series_state.setter();
-        html! {
-            <FanSeriesPicker
-                selection={picked_fan_series_state.deref().clone()}
-                no_selection_label={"--"}
-                on_select={
-                   move |value| set_picked_fan_series.set(value)
-            }
-            />
-        }
+
+
+    let on_determinations_extracted = {
+        let determinations_setter = determinations_state.setter();
+        use_callback(
+            move |dets: Vec<[String; 3]>, _deps| determinations_setter.set(dets),
+            (),
+        )
     };
 
-    let size_picker = {
-        let picked_fan_size_setter = picked_fan_size_state.setter();
-        let fan_series_id = picked_fan_series_state.deref().clone().map(|fs| fs.id);
-        let option_predicate = use_callback(
-            |fs: FanSize<()>, fan_series_id| match fan_series_id {
-                Some(fan_series_id) => &fs.fan_series_id == fan_series_id,
-                None => true,
-            },
-            fan_series_id,
-        );
-        html! {
-            <FanSizePicker
-                option_predicate={option_predicate}
-                selection={(*picked_fan_size_state).clone()}
-                no_selection_label={"--"}
-                on_select={move |s| picked_fan_size_setter.set(s)}
-            />
-        }
-    };
+    let saved_size = maybe_report.as_ref().map(|report| {
+        let (fan_size, _fan_series): (FanSize<()>, FanSeries<()>) = report.fan_size.clone().into();
+        fan_size
+    });
 
-    match maybe_report {
+    let (header, maybe_test_id_input) = match maybe_report {
         None => {
-            html! {
-                <div>
-                    <h1>{"New A1 Report"}</h1>
-                    {series_picker}
-                    {size_picker}
-                </div>
-
-            }
+            let test_id_input = html! {
+                <>
+                    <label>{"Report ID"}</label>
+                    <TaggedInput<()>
+                        value={(*report_id_state).clone()}
+                        tag={()}
+                        onchange={on_report_id_change}
+                    />
+                </>
+            };
+            (html! {<h1>{"New A1 Report"}</h1>}, Some(test_id_input))
         }
         Some(report) => {
-            html! {
-                <div>
-                    <h1>{"Test No. "}{ report.id.to_owned() }</h1>
-                    <h2>{"Test Details"}</h2>
-                    <div style="display: grid; grid-template-columns: auto auto; width: fit-content; column-gap: 8px; row-gap: 4px;">
-                        <label>{"Tested Fan Series"}</label>
-                        {series_picker}
-                        <label>{"Tested Fan Size"}</label>
-                        {size_picker}
-                        <label>{"Test RPM"}</label>
-                        <FloatInput
-                            value={(*entered_rpm_state).clone()}
-                            index={0}
-                            onchange={on_rpm_input_change}
-                        />
-                    </div>
-                    <label><h2>{"Determination Points"}</h2></label>
-                    <A12010DeterminationTable
-                        fields={(*determinations_state).clone()}
-                        onchange={on_dets_input_change}
-                    />
-                    <label><h3>{"Quick Paste Determination Points"}</h3></label>
-                    <textarea ref={determination_paste_ref} rows={"13"} cols={"50"} onblur={on_determination_paste} >
-                    </textarea>
-                    <button onclick={handle_save_callback}>{"Save"}</button>
-                </div>
-            }
+            
+            (html! {<h1>{"Test No. "}{ report.id.to_owned() }</h1>}, None)
         }
+    };
+
+    html! {
+        <div>
+            {header}
+            <h2>{"Test Details"}</h2>
+            <div style="display: grid; grid-template-columns: auto auto; width: fit-content; column-gap: 8px; row-gap: 4px;">
+                {maybe_test_id_input}
+                <FanSeriesAndSizePicker
+                    {saved_size}
+                    {picked_fan_series_state}
+                    {picked_fan_size_state}
+                />
+                <label>{"Test RPM"}</label>
+                <TaggedInput<()>
+                    value={(*entered_rpm_state).clone()}
+                    tag={()}
+                    onchange={on_rpm_input_change}
+                />
+            </div>
+            <label><h2>{"Determination Points"}</h2></label>
+            <A12010DeterminationTable
+                fields={(*determinations_state).clone()}
+                onchange={on_dets_input_change}
+            />
+            <label><h3>{"Quick Paste Determination Points"}</h3></label>
+            <DeterminationsPasteTextArea<3,10>
+                on_extracted={on_determinations_extracted}
+                cols_to_extract={[3,4,5]}
+                expected_row_length={9}
+                expected_headers={vec![
+                    "Det. No. P t P v P s Q H K p η t η s",
+                    "(in. wg) (in. wg) (in. wg) (cfm) (hp) - (%) (%)"
+                ]}
+            />
+            <button onclick={handle_save_callback}>{"Save"}</button>
+        </div>
     }
 }

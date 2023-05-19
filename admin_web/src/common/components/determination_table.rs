@@ -62,7 +62,7 @@ pub fn DeterminationTableRow<const COL_COUNT: usize>(
         .map(|(index, val)| {
             html! {
               <td>
-                  <FloatInput onchange={handle_change.clone()} {index} value={val.clone()} />
+                  <TaggedInput<usize> onchange={handle_change.clone()} tag={index} value={val.clone()} />
               </td>
             }
         })
@@ -78,31 +78,31 @@ pub fn DeterminationTableRow<const COL_COUNT: usize>(
 }
 
 #[derive(Properties, PartialEq)]
-pub struct FloatInputProps {
+pub struct TaggedInputProps<T: Clone + Eq + 'static> {
     pub value: String,
-    pub index: usize,
-    pub onchange: Callback<(usize, String), ()>,
+    pub tag: T,
+    pub onchange: Callback<(T, String), ()>,
 }
 
 #[function_component]
-pub fn FloatInput(
-    FloatInputProps {
+pub fn TaggedInput<T: Clone + Eq + 'static>(
+    TaggedInputProps {
         value,
-        index,
+        tag,
         onchange,
-    }: &FloatInputProps,
+    }: &TaggedInputProps<T>,
 ) -> Html {
     let input_ref = use_node_ref();
 
     let onblur = use_callback(
-        move |_evt, (index_ref, input_ref, onchange_ref)| {
+        move |_evt, (tag_ref, input_ref, onchange_ref)| {
             let input = input_ref
                 .cast::<HtmlInputElement>()
                 .expect("input_ref not attached to input element");
 
-            onchange_ref.emit((index_ref.clone(), input.value()).clone());
+            onchange_ref.emit((tag_ref.clone(), input.value()).clone());
         },
-        (index.clone(), input_ref.clone(), onchange.clone()),
+        (tag.clone(), input_ref.clone(), onchange.clone()),
     );
 
     html! {
