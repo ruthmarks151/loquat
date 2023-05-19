@@ -1,6 +1,5 @@
 use std::iter;
 
-
 use yew::{function_component, html, use_callback, Callback, Html, Properties};
 
 use crate::common::components::DeterminationTable;

@@ -1,9 +1,7 @@
 use std::rc::Rc;
 
 use loquat_common::models::FanSize;
-use yew::{
-    function_component, html, use_effect_with_deps, Callback, Html, Properties,
-};
+use yew::{function_component, html, use_effect_with_deps, Callback, Html, Properties};
 use yewdux::prelude::{use_selector_with_deps, use_store};
 
 use crate::api::store::Store as ApiStore;
@@ -13,7 +11,8 @@ use crate::features::fan_size::Store;
 
 #[derive(Properties, PartialEq)]
 pub struct FanSizePickerProps {
-    pub fan_series_id: String,
+    // pub fan_series_id: Option<String>,
+    pub option_predicate: Callback<FanSize<()>, bool>,
     pub no_selection_label: String,
     pub selection: Option<FanSize<()>>,
     pub on_select: Callback<Option<FanSize<()>>, ()>,
@@ -22,7 +21,7 @@ pub struct FanSizePickerProps {
 #[function_component]
 pub fn FanSizePicker(
     FanSizePickerProps {
-        fan_series_id,
+        option_predicate,
         no_selection_label,
         selection,
         on_select,
@@ -31,17 +30,20 @@ pub fn FanSizePicker(
     let gettable = Gettable::FanSizesIndex;
 
     let (_state, dispatch) = use_store::<ApiStore>();
-    let fan_sizes: Rc<Vec<FanSize<()>>> = use_selector_with_deps(
-        move |state: &Store, deps| {
-            state
-                .fan_sizes
-                .values()
-                .filter(|size| size.fan_series_id.clone() == (deps).clone())
-                .cloned()
-                .collect::<Vec<_>>()
-        },
-        fan_series_id.clone(),
-    );
+    let fan_sizes: Rc<Vec<FanSize<()>>> = {
+        use_selector_with_deps(
+            move |state: &Store, option_predicate| {
+                state
+                    .fan_sizes
+                    .values()
+                    .filter(|val| option_predicate.emit((*val).clone()))
+                    .cloned()
+                    .collect::<Vec<_>>()
+            },
+            option_predicate.clone(),
+        )
+    };
+
     let request_status = use_selector_with_deps(
         |store: &ApiStore, dep_gettable| {
             store
