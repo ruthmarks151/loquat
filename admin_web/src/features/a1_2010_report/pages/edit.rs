@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use loquat_common::api::a1_2010_report::UpdateBody;
 
 use yew::prelude::*;
@@ -8,8 +10,8 @@ use loquat_common::models::{
 };
 
 use crate::api::store::Store as ApiStore;
-use crate::common::components::{DeterminationsPasteTextArea, FanSeriesAndSizePicker};
 use crate::common::components::determination_table::TaggedInput;
+use crate::common::components::{DeterminationsPasteTextArea, FanSeriesAndSizePicker};
 use crate::features::a1_2010_report::components::A12010DeterminationTable;
 use crate::store::select_a1_report;
 use crate::{
@@ -36,22 +38,123 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
     let entered_rpm_state: UseStateHandle<String> = use_state(|| "".to_string());
     let determinations_state: UseStateHandle<Vec<[String; 3]>> = use_state(|| vec![]);
 
+    type FanSizeIdParse = Result<String, Vec<String>>;
+    type RpmParse = Result<f64, Vec<String>>;
+
+    type DeterminationValueErr = Vec<String>;
+    type DeterminationRowErr = [DeterminationValueErr; 3];
+    type DeterminationsParseErr = Vec<DeterminationRowErr>;
+    type DeterminationsParse = Result<Vec<A1Standard2010Determination>, DeterminationsParseErr>;
+
+    #[derive(Debug, Clone, PartialEq)]
+    struct UpdateBodyErrors {
+        size_errs: Vec<String>,
+        rpm_errs: Vec<String>,
+        determination_errs: DeterminationsParseErr,
+    }
+
+    let parsed_update_body: Result<UpdateBody, UpdateBodyErrors> = (|| {
+        let parsed_fan_size_id: FanSizeIdParse = match picked_fan_size_state.deref() {
+            Some(fan_size) => Ok(fan_size.id.clone()),
+            None => Err(vec!["You must select a fan size for the report".to_string()]),
+        };
+
+        let parsed_rpm: RpmParse = entered_rpm_state
+            .deref()
+            .parse::<f64>()
+            .map_err(|_| {
+                if entered_rpm_state.is_empty() {
+                    vec!["You must enter a fan RPM for the test".to_string()]
+                } else {
+                    vec!["You must enter a valid number".to_string()]
+                }
+            })
+            .and_then(|value| {
+                if value <= 0.0 {
+                    return Err(vec!["The fan speed must be positive".to_string()]);
+                }
+                Ok(value)
+            });
+
+        let parsed_determinations: DeterminationsParse = {
+            let parsed_rows: Vec<Result<[f64; 3], [DeterminationValueErr; 3]>> =
+                determinations_state
+                    .deref()
+                    .iter()
+                    .map(|det| {
+                        let det_attempt: [Result<f64, Vec<String>>; 3] = det.clone().map(|x| {
+                            x.parse::<f64>().map_err(|_| {
+                                if x.is_empty() {
+                                    vec!["All determination point values must be entered"
+                                        .to_string()]
+                                } else {
+                                    vec!["You must enter a valid number".to_string()]
+                                }
+                            })
+                        });
+                        if det_attempt.iter().all(|d| d.is_ok()) {
+                            Ok(det_attempt.map(|d| d.ok().unwrap()))
+                        } else {
+                            Err(det_attempt.map(|a| a.err().unwrap_or_default()))
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+            if parsed_rows.iter().all(|d| d.is_ok()) {
+                Ok(parsed_rows
+                    .into_iter()
+                    .map(|d| {
+                        let [static_pressure, cfm, brake_horsepower] = d.ok().unwrap();
+                        A1Standard2010Determination {
+                            static_pressure,
+                            cfm,
+                            brake_horsepower,
+                        }
+                    })
+                    .collect())
+            } else {
+                Err(parsed_rows
+                    .into_iter()
+                    .map(|row| row.err().unwrap_or_default())
+                    .collect::<Vec<_>>())
+            }
+        };
+
+        let parses = (parsed_fan_size_id, parsed_rpm, parsed_determinations);
+        if let (Ok(fan_size_id), Ok(fan_rpm), Ok(determinations)) = parses {
+            let id: String = report_id_state.to_string();
+            Ok(UpdateBody {
+                id,
+                determinations,
+                fan_rpm,
+                fan_size_id,
+            })
+        } else {
+            Err(UpdateBodyErrors {
+                size_errs: parses.0.err().unwrap_or_default(),
+                rpm_errs: parses.1.err().unwrap_or_default(),
+                determination_errs: parses.2.err().unwrap_or_default(),
+            })
+        }
+    })();
+
     let maybe_report: Option<A1Standard2010Report<FanSize<FanSeries<()>>>> =
         use_app_store_selector_with_deps(select_a1_report, report_id.clone());
     use_effect_with_deps(
         {
             let api_dispatch = api_dispatch.clone();
             move |report_id: &Option<String>| {
-            if let Some(id) = report_id {
-                api_dispatch.apply(ApiRequestAction::Get(
-                    GetParameters {
-                        ignore_cache: false,
-                    },
-                    Gettable::A1Report { id: id.clone() },
-                ));
+                if let Some(id) = report_id {
+                    api_dispatch.apply(ApiRequestAction::Get(
+                        GetParameters {
+                            ignore_cache: false,
+                        },
+                        Gettable::A1Report { id: id.clone() },
+                    ));
+                }
+                || {}
             }
-            || {}
-        }},
+        },
         report_id,
     );
     // Reset fields for new report
@@ -95,37 +198,17 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
 
     let handle_save_callback = {
         use_callback(
-            |_evt: MouseEvent,
-             (dispatch, id_opt, fan_rpm_opt, determinations_vec, fan_size_id_opt)| {
-                let update_body: Option<UpdateBody> = (|| {
-                    let fan_rpm = (*fan_rpm_opt).parse::<f64>().ok()?;
-                    let fan_size_id = fan_size_id_opt.clone()?;
-                    let parsed_determinations_vec = determinations_vec.into_iter().filter_map(|[static_pressure, cfm, brake_horsepower]| -> Option<A1Standard2010Determination> 
-                    { Some(A1Standard2010Determination {
-                    brake_horsepower: brake_horsepower.parse().ok()?, cfm: cfm.parse().ok()?, static_pressure: static_pressure.parse().ok()?
-                })}).collect();
-                    Some(UpdateBody {
-                        id: id_opt.clone().unwrap().to_string(),
-                        determinations: parsed_determinations_vec,
-                        fan_rpm,
-                        fan_size_id,
-                    })
-                })();
-
-                dispatch.apply(ApiRequestAction::Get(
-                    GetParameters { ignore_cache: true },
-                    Gettable::PutA12010Report {
-                        body: update_body.unwrap(),
-                    },
-                ))
+            |_evt: MouseEvent, (dispatch, parsed_update_body_ref)| {
+                if let Ok(update_body) = parsed_update_body_ref {
+                    dispatch.apply(ApiRequestAction::Get(
+                        GetParameters { ignore_cache: true },
+                        Gettable::PutA12010Report {
+                            body: update_body.clone(),
+                        },
+                    ))
+                }
             },
-            (
-                api_dispatch.clone(),
-                maybe_report.clone().map(|r| r.id),
-                (*entered_rpm_state).clone(),
-                (*determinations_state).clone(),
-                (*picked_fan_size_state).clone().map(|fs| fs.id),
-            ),
+            (api_dispatch.clone(), parsed_update_body.clone()),
         )
     };
 
@@ -152,8 +235,6 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
             (),
         )
     };
-
-
 
     let on_determinations_extracted = {
         let determinations_setter = determinations_state.setter();
@@ -182,25 +263,30 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
             };
             (html! {<h1>{"New A1 Report"}</h1>}, Some(test_id_input))
         }
-        Some(report) => {
-            
-            (html! {<h1>{"Test No. "}{ report.id.to_owned() }</h1>}, None)
-        }
+        Some(report) => (html! {<h1>{"Test No. "}{ report.id.to_owned() }</h1>}, None),
     };
 
+    let det_errs = parsed_update_body
+        .clone()
+        .err()
+        .map(|e| e.determination_errs)
+        .unwrap_or_default();
+
     html! {
-        <div>
+        <form>
             {header}
             <h2>{"Test Details"}</h2>
             <div style="display: grid; grid-template-columns: auto auto; width: fit-content; column-gap: 8px; row-gap: 4px;">
                 {maybe_test_id_input}
                 <FanSeriesAndSizePicker
+                    size_errs={parsed_update_body.clone().err().map(|e| e.size_errs).unwrap_or_default()}
                     {saved_size}
                     {picked_fan_series_state}
                     {picked_fan_size_state}
                 />
                 <label>{"Test RPM"}</label>
                 <TaggedInput<()>
+                    errs={parsed_update_body.clone().err().map(|e| e.rpm_errs).unwrap_or_default()}
                     value={(*entered_rpm_state).clone()}
                     tag={()}
                     onchange={on_rpm_input_change}
@@ -209,6 +295,7 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
             <label><h2>{"Determination Points"}</h2></label>
             <A12010DeterminationTable
                 fields={(*determinations_state).clone()}
+                child_errs={det_errs}
                 onchange={on_dets_input_change}
             />
             <label><h3>{"Quick Paste Determination Points"}</h3></label>
@@ -221,7 +308,9 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
                     "(in. wg) (in. wg) (in. wg) (cfm) (hp) - (%) (%)"
                 ]}
             />
-            <button onclick={handle_save_callback}>{"Save"}</button>
-        </div>
+            <button
+             //disabled={parsed_update_body.clone().is_err()}
+             onclick={handle_save_callback}>{"Save"}</button>
+        </form>
     }
 }

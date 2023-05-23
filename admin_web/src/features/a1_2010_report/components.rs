@@ -1,4 +1,4 @@
-use std::iter;
+use std::{fmt::Debug, iter};
 
 use yew::{function_component, html, use_callback, Callback, Html, Properties};
 
@@ -7,29 +7,28 @@ use crate::common::components::DeterminationTable;
 #[derive(Properties, PartialEq)]
 pub struct A12010DeterminationTableProps {
     pub fields: Vec<[String; 3]>,
+    pub child_errs: Vec<[Vec<String>; 3]>,
     pub onchange: Callback<[[String; 3]; 10]>,
 }
 
-fn to_filled_table(given_rows: &Vec<[String; 3]>) -> [[String; 3]; 10] {
-    log::info!("Filling up {:?}", given_rows);
+fn to_filled_table<T: Clone + Debug>(
+    given_rows: &Vec<[T; 3]>,
+    empty: impl Fn() -> T,
+) -> [[T; 3]; 10] {
     given_rows
         .iter()
-        .chain(iter::repeat(&[
-            "".to_string(),
-            "".to_string(),
-            "".to_string(),
-        ]))
+        .chain(iter::repeat(&[empty(), empty(), empty()]))
         .take(10)
         .cloned()
-        .collect::<Vec<[String; 3]>>()
+        .collect::<Vec<[T; 3]>>()
         .try_into()
         .unwrap()
 }
 
 #[function_component]
 pub fn A12010DeterminationTable(props: &A12010DeterminationTableProps) -> Html {
-    let rows = to_filled_table(&props.fields);
-
+    let rows = to_filled_table(&props.fields, || "".to_string());
+    let child_errs = to_filled_table(&props.child_errs, || vec![]);
     let on_determination_value_change: Callback<(usize, usize, String)> = use_callback(
         move |(row_index, col_index, value): (usize, usize, String), (rows, onchange)| {
             let mut rows = rows.clone();
@@ -51,6 +50,7 @@ pub fn A12010DeterminationTable(props: &A12010DeterminationTableProps) -> Html {
             headers={headers_lables}
             onchange={on_determination_value_change}
             {rows}
+            {child_errs}
         />
     }
 }

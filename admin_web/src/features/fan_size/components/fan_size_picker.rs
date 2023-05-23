@@ -11,7 +11,8 @@ use crate::features::fan_size::Store;
 
 #[derive(Properties, PartialEq)]
 pub struct FanSizePickerProps {
-    // pub fan_series_id: Option<String>,
+    #[prop_or(vec![])]
+    pub errs: Vec<String>,
     pub option_predicate: Callback<FanSize<()>, bool>,
     pub no_selection_label: String,
     pub selection: Option<FanSize<()>>,
@@ -21,6 +22,7 @@ pub struct FanSizePickerProps {
 #[function_component]
 pub fn FanSizePicker(
     FanSizePickerProps {
+        errs,
         option_predicate,
         no_selection_label,
         selection,
@@ -70,6 +72,7 @@ pub fn FanSizePicker(
     );
     html! {
       <Select<FanSize<()>>
+        errs={errs.clone()}
         no_selection_label={no_selection_label.clone()}
         selection={selection.clone()}
         on_select={on_select}

@@ -1,6 +1,8 @@
 use web_sys::HtmlInputElement;
-use yew::{Properties, Callback, function_component, Html, UseStateHandle, use_state, use_node_ref, use_callback, html};
-
+use yew::{
+    function_component, html, use_callback, use_effect_with_deps, use_node_ref, use_state,
+    Callback, Html, Properties, UseStateHandle,
+};
 
 #[derive(Properties, PartialEq)]
 pub struct DeterminationsPasteTextAreaProps<
@@ -25,7 +27,6 @@ pub fn DeterminationsPasteTextArea<const EXTRACTED_COLS: usize, const EXTRACTED_
     let total_rows = EXTRACTED_ROWS + expected_headers.len() + 1;
     let warnings: UseStateHandle<Vec<String>> = use_state(|| vec![]);
     let errors: UseStateHandle<Vec<String>> = use_state(|| vec![]);
-
 
     let determination_paste_ref = use_node_ref();
     let on_determination_paste = {
@@ -54,7 +55,7 @@ pub fn DeterminationsPasteTextArea<const EXTRACTED_COLS: usize, const EXTRACTED_
                         .enumerate()
                         .filter_map(|(i, header)| {
                             if text_rows.next() != Some(header) {
-                                Some(format!("Header row #{} header doesn't match expected", i))
+                                Some(format!("Header row #{} doesn't match expected", i + 1))
                             } else {
                                 None
                             }
@@ -66,7 +67,8 @@ pub fn DeterminationsPasteTextArea<const EXTRACTED_COLS: usize, const EXTRACTED_
                     .map(|(i, row_str)| {
                         let split_row = row_str.split_whitespace().collect::<Vec<_>>();
                         if split_row.len() != expected_row_length {
-                            warnings.push(format!("Determination Row #{}'s length isn't right", i +1));
+                            warnings
+                                .push(format!("Determination Row #{}'s length isn't right", i + 1));
                             cols_to_extract.map(|_col_id| "".to_string())
                         } else {
                             cols_to_extract.map(|col_id| {
@@ -90,44 +92,33 @@ pub fn DeterminationsPasteTextArea<const EXTRACTED_COLS: usize, const EXTRACTED_
             (),
         )
     };
-
-    let error_block = if !errors.is_empty() {
-        html! {
-            <>
-                <label style="background: red;">
-                    {"These determinations cannot be extracted"}
-                </label>
-                <ul>
-                    {errors.iter().map(|e| html! {<li> {e} </li>}).collect::<Html>()}
-                </ul>
-            </>
-        }
-    } else if !warnings.is_empty() {
-        html! {
-            <>
-                <label style="background: orange;">
-                    {"These determinations may have some problems"}
-                </label>
-                <ul>
-                    {warnings.iter().map(|e| html! {<li> {e} </li>}).collect::<Html>()}
-                </ul>
-            </>
-        }
-    } else {
-        html! {}
-    };
+    {
+        let determination_paste_ref = determination_paste_ref.clone();
+        use_effect_with_deps(
+            move |(errors, warnings)| {
+                if let Some(input) = determination_paste_ref.cast::<HtmlInputElement>() {
+                    if !errors.is_empty() {
+                        input.set_custom_validity(&errors.join("\n"));
+                    } else if !warnings.is_empty() {
+                        input.set_custom_validity(&warnings.join("\n"));
+                    } else {
+                        input.set_custom_validity("");
+                    }
+                    input.report_validity();
+                }
+            },
+            (errors, warnings),
+        );
+    }
 
     html! {
-        <div>
-            {error_block}
-            <textarea 
-                ref={determination_paste_ref} 
-                rows={total_rows.to_string()} 
-                cols={"50"} 
-                // onpaste={on_determination_paste.clone()} 
-                onchange={on_determination_paste} 
-            >
-            </textarea>
-        </div>
+        <textarea
+            ref={determination_paste_ref}
+            rows={total_rows.to_string()}
+            cols={"50"}
+            // onpaste={on_determination_paste.clone()}
+            onchange={on_determination_paste}
+        >
+        </textarea>
     }
 }

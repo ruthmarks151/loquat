@@ -5,6 +5,8 @@ use yew::{function_component, html, use_callback, use_node_ref, Callback, Html, 
 pub struct DeterminationTableProps<const COL_COUNT: usize, const ROW_COUNT: usize> {
     pub headers: [String; COL_COUNT],
     pub rows: [[String; COL_COUNT]; ROW_COUNT],
+    #[prop_or_else(|| [(); ROW_COUNT].map(|_| [(); COL_COUNT].map(|_| Vec::new())))]
+    pub child_errs: [[Vec<String>; COL_COUNT]; ROW_COUNT],
     pub onchange: Callback<(usize, usize, String), ()>,
 }
 
@@ -13,6 +15,7 @@ pub fn DeterminationTable<const COL_COUNT: usize, const ROW_COUNT: usize>(
     DeterminationTableProps {
         headers,
         rows,
+        child_errs,
         onchange,
     }: &DeterminationTableProps<COL_COUNT, ROW_COUNT>,
 ) -> Html {
@@ -29,7 +32,15 @@ pub fn DeterminationTable<const COL_COUNT: usize, const ROW_COUNT: usize>(
           </th>
           {header_html}
         </tr>
-        {rows.iter().enumerate().map(|(row_index, d)| html! { <DeterminationTableRow<COL_COUNT> {onchange} {row_index} values={d.clone()} /> } ).collect::<Html>()}
+        {rows
+            .iter()
+            .zip(child_errs)
+            .enumerate()
+            .map(|(row_index, (d, child_errs))| {
+                html! { <DeterminationTableRow<COL_COUNT> {onchange} {row_index} values={d.clone()} child_errs={child_errs.clone()} /> }
+            })
+            .collect::<Html>()
+        }
       </table>
     }
 }
@@ -37,6 +48,8 @@ pub fn DeterminationTable<const COL_COUNT: usize, const ROW_COUNT: usize>(
 #[derive(Properties, PartialEq)]
 pub struct DeterminationTableRowProps<const COL_COUNT: usize> {
     pub values: [String; COL_COUNT],
+    #[prop_or_else(|| [(); COL_COUNT].map(|_| Vec::new()))]
+    pub child_errs: [Vec<String>; COL_COUNT],
     pub row_index: usize,
     pub onchange: Callback<(usize, usize, String), ()>,
 }
@@ -45,6 +58,7 @@ pub struct DeterminationTableRowProps<const COL_COUNT: usize> {
 pub fn DeterminationTableRow<const COL_COUNT: usize>(
     DeterminationTableRowProps {
         values,
+        child_errs,
         row_index,
         onchange,
     }: &DeterminationTableRowProps<COL_COUNT>,
@@ -58,11 +72,12 @@ pub fn DeterminationTableRow<const COL_COUNT: usize>(
 
     let row_html: Html = values
         .into_iter()
+        .zip(child_errs)
         .enumerate()
-        .map(|(index, val)| {
+        .map(|(index, (val, errs))| {
             html! {
               <td>
-                  <TaggedInput<usize> onchange={handle_change.clone()} tag={index} value={val.clone()} />
+                  <TaggedInput<usize> onchange={handle_change.clone()} tag={index} value={val.clone()} errs={errs.clone()} />
               </td>
             }
         })
@@ -79,6 +94,8 @@ pub fn DeterminationTableRow<const COL_COUNT: usize>(
 
 #[derive(Properties, PartialEq)]
 pub struct TaggedInputProps<T: Clone + Eq + 'static> {
+    #[prop_or(vec![])]
+    pub errs: Vec<String>,
     pub value: String,
     pub tag: T,
     pub onchange: Callback<(T, String), ()>,
@@ -87,6 +104,7 @@ pub struct TaggedInputProps<T: Clone + Eq + 'static> {
 #[function_component]
 pub fn TaggedInput<T: Clone + Eq + 'static>(
     TaggedInputProps {
+        errs,
         value,
         tag,
         onchange,
@@ -105,7 +123,24 @@ pub fn TaggedInput<T: Clone + Eq + 'static>(
         (tag.clone(), input_ref.clone(), onchange.clone()),
     );
 
+    let style: &str = if !errs.is_empty() {
+        "border: 1px solid red;"
+    } else {
+        ""
+    };
+
+    if let Some(input) = input_ref.cast::<HtmlInputElement>() {
+        if errs.is_empty() {
+            input.set_custom_validity("");
+        } else {
+            input.set_custom_validity(&errs.join("\n"));
+        }
+        input.report_validity();
+    }
+
     html! {
-      <input ref={input_ref} value={value.clone()} onblur={onblur.clone()} />
+        <>
+            <input {style} ref={input_ref} value={value.clone()} onblur={onblur.clone()} />
+        </>
     }
 }

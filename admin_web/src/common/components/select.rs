@@ -15,6 +15,8 @@ pub trait SelectOption {
 
 #[derive(Properties, PartialEq)]
 pub struct SelectProps<T: PartialEq> {
+    #[prop_or(vec![])]
+    pub errs: Vec<String>,
     pub no_selection_label: String,
     pub selection: Option<T>,
     pub on_select: Callback<Option<T>, ()>,
@@ -25,6 +27,7 @@ pub struct SelectProps<T: PartialEq> {
 #[function_component]
 pub fn Select<T: PartialEq + Clone + SelectOption + 'static>(
     SelectProps {
+        errs,
         no_selection_label,
         selection,
         on_select,
@@ -70,6 +73,15 @@ pub fn Select<T: PartialEq + Clone + SelectOption + 'static>(
             )
         })
         .collect::<Html>();
+
+    if let Some(input) = select_ref.cast::<HtmlInputElement>() {
+        if errs.is_empty() {
+            input.set_custom_validity("");
+        } else {
+            input.set_custom_validity(&errs.join("\n"));
+        }
+        input.report_validity();
+    }
 
     let select_callback = use_callback(
         move |_evt: web_sys::Event, (on_select_dep, select_ref_dep, fan_serieses_ref)| {
@@ -129,8 +141,14 @@ pub fn Select<T: PartialEq + Clone + SelectOption + 'static>(
         }
     };
 
+    let style: &str = if !errs.is_empty() {
+        "border: 1px solid red;"
+    } else {
+        ""
+    };
+
     html! {
-      <select onchange={select_callback} ref={select_ref}>
+      <select {style} onchange={select_callback} ref={select_ref}>
         {options}
       </select>
     }
