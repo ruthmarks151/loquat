@@ -93,8 +93,6 @@ pub fn select_a1_report(
     state: &AppStore,
     maybe_id: &Option<String>,
 ) -> Option<A1Standard2010Report<FanSize<FanSeries<()>>>> {
-    log::info!("Selecting A1 id: {:#?}", maybe_id);
-
     if let Some(id) = maybe_id {
         let maybe_report = state.a1_report.reports.get(id);
         if let Some(report) = maybe_report {

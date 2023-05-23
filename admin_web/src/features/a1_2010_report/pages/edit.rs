@@ -12,7 +12,7 @@ use loquat_common::models::{
 use crate::api::store::Store as ApiStore;
 use crate::common::components::determination_table::TaggedInput;
 use crate::common::components::{DeterminationsPasteTextArea, FanSeriesAndSizePicker};
-use crate::features::a1_2010_report::components::A12010DeterminationTable;
+use crate::features::a1_2010_report::components::{A12010DeterminationTable, A1FanPlot};
 use crate::store::select_a1_report;
 use crate::{
     api::store::{ApiRequestAction, GetParameters, Gettable},
@@ -249,7 +249,7 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         fan_size
     });
 
-    let (header, maybe_test_id_input) = match maybe_report {
+    let (header, maybe_test_id_input) = match &maybe_report {
         None => {
             let test_id_input = html! {
                 <>
@@ -272,45 +272,60 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         .map(|e| e.determination_errs)
         .unwrap_or_default();
 
+    let maybe_points_to_render = parsed_update_body
+        .clone()
+        .map(|u| Some(u.determinations))
+        .unwrap_or(maybe_report.clone().map(|r| r.determinations));
+
     html! {
-        <form>
+        <>
             {header}
-            <h2>{"Test Details"}</h2>
-            <div style="display: grid; grid-template-columns: auto auto; width: fit-content; column-gap: 8px; row-gap: 4px;">
-                {maybe_test_id_input}
-                <FanSeriesAndSizePicker
-                    size_errs={parsed_update_body.clone().err().map(|e| e.size_errs).unwrap_or_default()}
-                    {saved_size}
-                    {picked_fan_series_state}
-                    {picked_fan_size_state}
-                />
-                <label>{"Test RPM"}</label>
-                <TaggedInput<()>
-                    errs={parsed_update_body.clone().err().map(|e| e.rpm_errs).unwrap_or_default()}
-                    value={(*entered_rpm_state).clone()}
-                    tag={()}
-                    onchange={on_rpm_input_change}
-                />
+            <div style="display: flex; flex-direction: row;">
+                <form>
+                    <h2>{"Test Details"}</h2>
+                    <div style="display: grid; grid-template-columns: auto auto; width: fit-content; column-gap: 8px; row-gap: 4px;">
+                        {maybe_test_id_input}
+                        <FanSeriesAndSizePicker
+                            size_errs={parsed_update_body.clone().err().map(|e| e.size_errs).unwrap_or_default()}
+                            {saved_size}
+                            {picked_fan_series_state}
+                            {picked_fan_size_state}
+                        />
+                        <label>{"Test RPM"}</label>
+                        <TaggedInput<()>
+                            errs={parsed_update_body.clone().err().map(|e| e.rpm_errs).unwrap_or_default()}
+                            value={(*entered_rpm_state).clone()}
+                            tag={()}
+                            onchange={on_rpm_input_change}
+                        />
+                    </div>
+                    <label><h2>{"Determination Points"}</h2></label>
+                    <A12010DeterminationTable
+                        fields={(*determinations_state).clone()}
+                        child_errs={det_errs}
+                        onchange={on_dets_input_change}
+                    />
+                    <label><h3>{"Quick Paste Determination Points"}</h3></label>
+                    <DeterminationsPasteTextArea<3,10>
+                        on_extracted={on_determinations_extracted}
+                        cols_to_extract={[3,4,5]}
+                        expected_row_length={9}
+                        expected_headers={vec![
+                            "Det. No. P t P v P s Q H K p η t η s",
+                            "(in. wg) (in. wg) (in. wg) (cfm) (hp) - (%) (%)"
+                        ]}
+                    />
+                    <button
+                    //disabled={parsed_update_body.clone().is_err()}
+                    onclick={handle_save_callback}>{"Save"}</button>
+                </form>
+                <div style="flex-grow: 1">
+                    { maybe_points_to_render
+                        .map(|fc| html!{ <A1FanPlot points={fc} /> })
+                        .unwrap_or(html! { <p>{"Once you enter a complete fan curve, you'll see it here"}</p> }) 
+                    }
+                </div>
             </div>
-            <label><h2>{"Determination Points"}</h2></label>
-            <A12010DeterminationTable
-                fields={(*determinations_state).clone()}
-                child_errs={det_errs}
-                onchange={on_dets_input_change}
-            />
-            <label><h3>{"Quick Paste Determination Points"}</h3></label>
-            <DeterminationsPasteTextArea<3,10>
-                on_extracted={on_determinations_extracted}
-                cols_to_extract={[3,4,5]}
-                expected_row_length={9}
-                expected_headers={vec![
-                    "Det. No. P t P v P s Q H K p η t η s",
-                    "(in. wg) (in. wg) (in. wg) (cfm) (hp) - (%) (%)"
-                ]}
-            />
-            <button
-             //disabled={parsed_update_body.clone().is_err()}
-             onclick={handle_save_callback}>{"Save"}</button>
-        </form>
+        </>
     }
 }
