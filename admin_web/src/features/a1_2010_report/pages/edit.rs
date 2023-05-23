@@ -31,12 +31,12 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
     let report_id = props.id.as_ref().map(|id| id.replace("%20", " "));
     let report_id_state: UseStateHandle<String> = {
         let report_id = report_id.clone();
-        use_state(move || report_id.map_or("".to_string(), |id| id.to_string()))
+        use_state(move || report_id.unwrap_or("".to_string()))
     };
     let picked_fan_series_state: UseStateHandle<Option<FanSeries<()>>> = use_state(|| None);
     let picked_fan_size_state: UseStateHandle<Option<FanSize<()>>> = use_state(|| None);
     let entered_rpm_state: UseStateHandle<String> = use_state(|| "".to_string());
-    let determinations_state: UseStateHandle<Vec<[String; 3]>> = use_state(|| vec![]);
+    let determinations_state: UseStateHandle<Vec<[String; 3]>> = use_state(Vec::new);
 
     type FanSizeIdParse = Result<String, Vec<String>>;
     type RpmParse = Result<f64, Vec<String>>;
@@ -208,7 +208,7 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
                     ))
                 }
             },
-            (api_dispatch.clone(), parsed_update_body.clone()),
+            (api_dispatch, parsed_update_body.clone()),
         )
     };
 
@@ -275,7 +275,7 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
     let maybe_points_to_render = parsed_update_body
         .clone()
         .map(|u| Some(u.determinations))
-        .unwrap_or(maybe_report.clone().map(|r| r.determinations));
+        .unwrap_or(maybe_report.map(|r| r.determinations));
 
     html! {
         <>

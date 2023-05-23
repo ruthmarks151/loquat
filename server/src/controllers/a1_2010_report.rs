@@ -47,7 +47,7 @@ pub async fn get(
         parameters: A1Standard2010Parameters {
           rpm: record.rpm,
         },
-        determinations: record.determinations.as_array().expect("Determinations JSONB was not an array!").into_iter().map(|el| { let obj = el.as_object().expect("Element of determinants was not an object!"); A1Standard2010Determination{
+        determinations: record.determinations.as_array().expect("Determinations JSONB was not an array!").iter().map(|el| { let obj = el.as_object().expect("Element of determinants was not an object!"); A1Standard2010Determination{
             cfm: obj.get("cfm").and_then(|num| num.as_f64()).expect("Object has no CFM"),
             static_pressure: obj.get("static_pressure").and_then(|num| num.as_f64()).expect("Object has no static_pressure"),
             brake_horsepower: obj.get("brake_horsepower").and_then(|num| num.as_f64()).expect("Object has no brake_horsepower"),

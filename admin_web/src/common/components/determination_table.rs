@@ -65,13 +65,13 @@ pub fn DeterminationTableRow<const COL_COUNT: usize>(
 ) -> Html {
     let handle_change: Callback<(usize, String)> = use_callback(
         move |(col_index, value), (row_index_ref, onchange_ref)| {
-            onchange_ref.emit((row_index_ref.clone(), col_index, value))
+            onchange_ref.emit((*row_index_ref, col_index, value))
         },
-        (row_index.clone(), onchange.clone()),
+        (*row_index, onchange.clone()),
     );
 
     let row_html: Html = values
-        .into_iter()
+        .iter()
         .zip(child_errs)
         .enumerate()
         .map(|(index, (val, errs))| {
@@ -118,7 +118,7 @@ pub fn TaggedInput<T: Clone + Eq + 'static>(
                 .cast::<HtmlInputElement>()
                 .expect("input_ref not attached to input element");
 
-            onchange_ref.emit((tag_ref.clone(), input.value()).clone());
+            onchange_ref.emit((tag_ref.clone(), input.value()));
         },
         (tag.clone(), input_ref.clone(), onchange.clone()),
     );

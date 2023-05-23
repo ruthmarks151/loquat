@@ -1,3 +1,5 @@
+// These types are necessarily complex to grab out specific indicies of tuple lists
+
 pub fn first<T1, Tup>((t1, _rest): &(T1, Tup)) -> &T1 {
     t1
 }
@@ -10,12 +12,14 @@ pub fn third<T1, T2, T3, Tup>((_t1, (_t2, (t3, _rest))): &(T1, (T2, (T3, Tup))))
     t3
 }
 
+#[allow(clippy::type_complexity)]
 pub fn fourth<T1, T2, T3, T4, Tup>(
     (_t1, (_t2, (_t3, (t4, _rest)))): &(T1, (T2, (T3, (T4, Tup)))),
 ) -> &T4 {
     t4
 }
 
+#[allow(clippy::type_complexity)]
 pub fn fifth<T1, T2, T3, T4, T5, Tup>(
     (_t1, (_t2, (_t3, (_t4, (t5, _rest))))): &(T1, (T2, (T3, (T4, (T5, Tup))))),
 ) -> &T5 {

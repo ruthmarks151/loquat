@@ -24,8 +24,9 @@ pub trait ScalesTo<Context> {
 }
 
 impl<Context> ScalesTo<Context> for () {
+    #[allow(clippy::unused_unit)] 
     fn scale_to(self, _to: &Context) -> Self {
-        ()
+        () // Return unit, as it's an explicit intention of the function
     }
 }
 

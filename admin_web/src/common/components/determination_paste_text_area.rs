@@ -25,16 +25,16 @@ pub fn DeterminationsPasteTextArea<const EXTRACTED_COLS: usize, const EXTRACTED_
     }: &DeterminationsPasteTextAreaProps<EXTRACTED_COLS, EXTRACTED_ROWS>,
 ) -> Html {
     let total_rows = EXTRACTED_ROWS + expected_headers.len() + 1;
-    let warnings: UseStateHandle<Vec<String>> = use_state(|| vec![]);
-    let errors: UseStateHandle<Vec<String>> = use_state(|| vec![]);
+    let warnings: UseStateHandle<Vec<String>> = use_state(Vec::new);
+    let errors: UseStateHandle<Vec<String>> = use_state(Vec::new);
 
     let determination_paste_ref = use_node_ref();
     let on_determination_paste = {
         let determination_paste_ref = determination_paste_ref.clone();
         let expected_headers = expected_headers.clone();
         let on_extracted = on_extracted.clone();
-        let cols_to_extract = cols_to_extract.clone();
-        let expected_row_length = expected_row_length.clone();
+        let cols_to_extract = *cols_to_extract;
+        let expected_row_length = *expected_row_length;
         let warnings_setter = warnings.setter();
         let errors_setter = errors.setter();
         use_callback(
@@ -47,7 +47,7 @@ pub fn DeterminationsPasteTextArea<const EXTRACTED_COLS: usize, const EXTRACTED_
                     .expect("input_ref not attached to input element");
 
                 let input_val: String = input.value();
-                let mut text_rows = input_val.split("\n");
+                let mut text_rows = input_val.split('\n');
 
                 warnings.extend(
                     expected_headers
@@ -78,13 +78,12 @@ pub fn DeterminationsPasteTextArea<const EXTRACTED_COLS: usize, const EXTRACTED_
                             })
                         }
                     })
-                    .collect::<Vec<_>>()
-                    .clone();
+                    .collect::<Vec<_>>();
                 if grid.len() != EXTRACTED_ROWS {
                     errors.push("Paste doesn't have the correct number of rows".to_string());
                 }
                 if errors.is_empty() {
-                    on_extracted.emit(grid.clone());
+                    on_extracted.emit(grid);
                 }
                 errors_setter.set(errors);
                 warnings_setter.set(warnings);

@@ -47,8 +47,7 @@ pub fn FanSeriesAndSizePicker(
         },
         picked_fan_series_state
             .as_ref()
-            .map(|fs| fs.id.clone())
-            .into(),
+            .map(|fs| fs.id.clone()),
     );
 
     let series_picker = {

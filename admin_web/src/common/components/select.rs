@@ -46,7 +46,7 @@ pub fn Select<T: PartialEq + Clone + SelectOption + 'static>(
                 .expect("select_ref not attached to select element");
             select_el.set_value(&selection_id_ref[..]);
         },
-        (selection_id.clone(), select_ref.clone()),
+        (selection_id, select_ref.clone()),
     );
 
     let selected_option: Html = match selection {
