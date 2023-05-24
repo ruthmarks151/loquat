@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use web_sys::HtmlInputElement;
 use yew::{
-    function_component, html, use_callback, use_effect_with_deps, use_node_ref, Callback, Html,
-    Properties,
+    function_component, html, use_callback, use_effect_with_deps, use_node_ref, AttrValue,
+    Callback, Html, Properties,
 };
 
 use crate::api::store::RequestStatuses;
@@ -15,9 +15,9 @@ pub trait SelectOption {
 
 #[derive(Properties, PartialEq)]
 pub struct SelectProps<T: PartialEq> {
-    #[prop_or(vec![])]
-    pub errs: Vec<String>,
-    pub no_selection_label: String,
+    #[prop_or(Rc::new(vec![]))]
+    pub errs: Rc<Vec<String>>,
+    pub no_selection_label: AttrValue,
     pub selection: Option<T>,
     pub on_select: Callback<Option<T>, ()>,
     pub request_status: Rc<RequestStatuses>,

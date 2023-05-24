@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{ops::Deref, rc::Rc};
 
 use loquat_common::models::{FanSeries, FanSize};
 use yew::{
@@ -9,8 +9,8 @@ use crate::features::{fan_series::FanSeriesPicker, fan_size::FanSizePicker};
 
 #[derive(Properties, PartialEq)]
 pub struct FanSeriesAndSizePickerProps {
-    #[prop_or(vec![])]
-    pub size_errs: Vec<String>,
+    #[prop_or(Rc::new(vec![]))]
+    pub size_errs: Rc<Vec<String>>,
     pub saved_size: Option<FanSize<()>>,
     pub picked_fan_series_state: UseStateHandle<Option<FanSeries<()>>>,
     pub picked_fan_size_state: UseStateHandle<Option<FanSize<()>>>,
@@ -45,9 +45,7 @@ pub fn FanSeriesAndSizePicker(
                 }
             }
         },
-        picked_fan_series_state
-            .as_ref()
-            .map(|fs| fs.id.clone()),
+        picked_fan_series_state.as_ref().map(|fs| fs.id.clone()),
     );
 
     let series_picker = {
@@ -75,7 +73,7 @@ pub fn FanSeriesAndSizePicker(
         );
         html! {
             <FanSizePicker
-                errs={size_errs.clone()}
+                errs={size_errs}
                 option_predicate={option_predicate}
                 selection={picked_fan_size_state.deref().clone()}
                 no_selection_label={"--"}

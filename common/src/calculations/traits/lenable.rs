@@ -11,7 +11,7 @@ impl Lenable for () {
         0
     }
 
-    fn is_empty(&self) -> bool{
+    fn is_empty(&self) -> bool {
         true
     }
 }
@@ -21,7 +21,7 @@ impl<Head, Tail: TupleList + Lenable> Lenable for (Head, Tail) {
         1 + self.1.len()
     }
 
-    fn is_empty(&self) -> bool{
+    fn is_empty(&self) -> bool {
         false
     }
 }

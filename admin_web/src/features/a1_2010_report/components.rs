@@ -1,4 +1,4 @@
-use std::{fmt::Debug, iter};
+use std::{fmt::Debug, iter, rc::Rc};
 
 use loquat_common::models::A1Standard2010Determination;
 use yew::{
@@ -11,14 +11,11 @@ use crate::common::components::DeterminationTable;
 #[derive(Properties, PartialEq)]
 pub struct A12010DeterminationTableProps {
     pub fields: Vec<[String; 3]>,
-    pub child_errs: Vec<[Vec<String>; 3]>,
+    pub child_errs: Rc<Vec<[Rc<Vec<String>>; 3]>>,
     pub onchange: Callback<[[String; 3]; 10]>,
 }
 
-fn to_filled_table<T: Clone + Debug>(
-    given_rows: &[[T; 3]],
-    empty: impl Fn() -> T,
-) -> [[T; 3]; 10] {
+fn to_filled_table<T: Clone + Debug>(given_rows: &[[T; 3]], empty: impl Fn() -> T) -> [[T; 3]; 10] {
     given_rows
         .iter()
         .chain(iter::repeat(&[empty(), empty(), empty()]))
@@ -32,7 +29,7 @@ fn to_filled_table<T: Clone + Debug>(
 #[function_component]
 pub fn A12010DeterminationTable(props: &A12010DeterminationTableProps) -> Html {
     let rows = to_filled_table(&props.fields, || "".to_string());
-    let child_errs = to_filled_table(&props.child_errs, Vec::new);
+    let child_errs = to_filled_table(&props.child_errs, || Rc::new(Vec::new()));
     let on_determination_value_change: Callback<(usize, usize, String)> = use_callback(
         move |(row_index, col_index, value): (usize, usize, String), (rows, onchange)| {
             let mut rows = rows.clone();
@@ -114,9 +111,7 @@ pub fn A1FanPlot(A1FanPlotProps { points }: &A1FanPlotProps) -> Html {
 
             let layout = Layout::new()
                 .title("A1 Fan Curve".into())
-                .legend(
-                    Legend::new().x(0.1).y(0.0)
-                )
+                .legend(Legend::new().x(0.1).y(0.0))
                 .x_axis(Axis::new().title("Airflow (cfm)".into()))
                 .y_axis(
                     Axis::new()
@@ -142,7 +137,7 @@ pub fn A1FanPlot(A1FanPlotProps { points }: &A1FanPlotProps) -> Html {
                     if let Some(shared_max) = shared_max {
                         y.range(vec![0., shared_max])
                     } else {
-                    y
+                        y
                     }
                 });
             plot.set_layout(layout);

@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use loquat_common::models::FanSize;
-use yew::{function_component, html, use_effect_with_deps, Callback, Html, Properties};
+use yew::{function_component, html, use_effect_with_deps, AttrValue, Callback, Html, Properties};
 use yewdux::prelude::{use_selector_with_deps, use_store};
 
 use crate::api::store::Store as ApiStore;
@@ -11,10 +11,10 @@ use crate::features::fan_size::Store;
 
 #[derive(Properties, PartialEq)]
 pub struct FanSizePickerProps {
-    #[prop_or(vec![])]
-    pub errs: Vec<String>,
+    #[prop_or(Rc::new(vec![]))]
+    pub errs: Rc<Vec<String>>,
     pub option_predicate: Callback<FanSize<()>, bool>,
-    pub no_selection_label: String,
+    pub no_selection_label: AttrValue,
     pub selection: Option<FanSize<()>>,
     pub on_select: Callback<Option<FanSize<()>>, ()>,
 }
@@ -72,7 +72,7 @@ pub fn FanSizePicker(
     );
     html! {
       <Select<FanSize<()>>
-        errs={errs.clone()}
+        errs={errs}
         no_selection_label={no_selection_label.clone()}
         selection={selection.clone()}
         on_select={on_select}

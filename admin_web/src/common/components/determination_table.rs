@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use web_sys::HtmlInputElement;
 use yew::{function_component, html, use_callback, use_node_ref, Callback, Html, Properties};
 
@@ -5,8 +7,8 @@ use yew::{function_component, html, use_callback, use_node_ref, Callback, Html, 
 pub struct DeterminationTableProps<const COL_COUNT: usize, const ROW_COUNT: usize> {
     pub headers: [String; COL_COUNT],
     pub rows: [[String; COL_COUNT]; ROW_COUNT],
-    #[prop_or_else(|| [(); ROW_COUNT].map(|_| [(); COL_COUNT].map(|_| Vec::new())))]
-    pub child_errs: [[Vec<String>; COL_COUNT]; ROW_COUNT],
+    #[prop_or_else(|| [(); ROW_COUNT].map(|_| [(); COL_COUNT].map(|_| Rc::new(Vec::new()))))]
+    pub child_errs: [[Rc<Vec<String>>; COL_COUNT]; ROW_COUNT],
     pub onchange: Callback<(usize, usize, String), ()>,
 }
 
@@ -48,8 +50,8 @@ pub fn DeterminationTable<const COL_COUNT: usize, const ROW_COUNT: usize>(
 #[derive(Properties, PartialEq)]
 pub struct DeterminationTableRowProps<const COL_COUNT: usize> {
     pub values: [String; COL_COUNT],
-    #[prop_or_else(|| [(); COL_COUNT].map(|_| Vec::new()))]
-    pub child_errs: [Vec<String>; COL_COUNT],
+    #[prop_or_else(|| [(); COL_COUNT].map(|_| Rc::new(Vec::new())))]
+    pub child_errs: [Rc<Vec<String>>; COL_COUNT],
     pub row_index: usize,
     pub onchange: Callback<(usize, usize, String), ()>,
 }
@@ -77,7 +79,7 @@ pub fn DeterminationTableRow<const COL_COUNT: usize>(
         .map(|(index, (val, errs))| {
             html! {
               <td>
-                  <TaggedInput<usize> onchange={handle_change.clone()} tag={index} value={val.clone()} errs={errs.clone()} />
+                  <TaggedInput<usize> onchange={handle_change.clone()} tag={index} value={val.clone()} errs={Rc::clone(errs)} />
               </td>
             }
         })
@@ -94,8 +96,8 @@ pub fn DeterminationTableRow<const COL_COUNT: usize>(
 
 #[derive(Properties, PartialEq)]
 pub struct TaggedInputProps<T: Clone + Eq + 'static> {
-    #[prop_or(vec![])]
-    pub errs: Vec<String>,
+    #[prop_or(Rc::new(vec![]))]
+    pub errs: Rc<Vec<String>>,
     pub value: String,
     pub tag: T,
     pub onchange: Callback<(T, String), ()>,

@@ -11,7 +11,7 @@ use yewdux::prelude::use_store;
 
 #[derive(Properties, PartialEq)]
 pub struct ReadFanSeriesPageProps {
-    pub id: String,
+    pub id: AttrValue,
 }
 
 #[function_component]

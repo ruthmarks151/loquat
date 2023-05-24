@@ -1,4 +1,5 @@
 use std::ops::Deref;
+use std::rc::Rc;
 
 use loquat_common::api::a1_2010_report::UpdateBody;
 
@@ -21,7 +22,7 @@ use crate::{
 
 #[derive(Properties, PartialEq)]
 pub struct EditA1PageProps {
-    pub id: Option<String>,
+    pub id: Option<AttrValue>,
 }
 
 #[function_component]
@@ -41,11 +42,6 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
     type FanSizeIdParse = Result<String, Vec<String>>;
     type RpmParse = Result<f64, Vec<String>>;
 
-    type DeterminationValueErr = Vec<String>;
-    type DeterminationRowErr = [DeterminationValueErr; 3];
-    type DeterminationsParseErr = Vec<DeterminationRowErr>;
-    type DeterminationsParse = Result<Vec<A1Standard2010Determination>, DeterminationsParseErr>;
-
     #[derive(Debug, Clone, PartialEq)]
     struct UpdateBodyErrors {
         size_errs: Vec<String>,
@@ -53,93 +49,94 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         determination_errs: DeterminationsParseErr,
     }
 
-    let parsed_update_body: Result<UpdateBody, UpdateBodyErrors> = (|| {
-        let parsed_fan_size_id: FanSizeIdParse = match picked_fan_size_state.deref() {
+    let parsed_fan_size_id: Rc<FanSizeIdParse> = use_memo(
+        |picked_fan_size| match picked_fan_size {
             Some(fan_size) => Ok(fan_size.id.clone()),
             None => Err(vec!["You must select a fan size for the report".to_string()]),
-        };
+        },
+        picked_fan_size_state.deref().clone(),
+    );
 
-        let parsed_rpm: RpmParse = entered_rpm_state
-            .deref()
-            .parse::<f64>()
-            .map_err(|_| {
-                if entered_rpm_state.is_empty() {
-                    vec!["You must enter a fan RPM for the test".to_string()]
-                } else {
-                    vec!["You must enter a valid number".to_string()]
-                }
-            })
-            .and_then(|value| {
+    let parsed_rpm: Rc<RpmParse> = use_memo(
+        |entered_rpm: &String| match entered_rpm.deref().parse::<f64>() {
+            Ok(value) => {
                 if value <= 0.0 {
-                    return Err(vec!["The fan speed must be positive".to_string()]);
+                    Err(vec!["The fan speed must be positive".to_string()])
+                } else {
+                    Ok(value)
                 }
-                Ok(value)
-            });
-
-        let parsed_determinations: DeterminationsParse = {
-            let parsed_rows: Vec<Result<[f64; 3], [DeterminationValueErr; 3]>> =
-                determinations_state
-                    .deref()
-                    .iter()
-                    .map(|det| {
-                        let det_attempt: [Result<f64, Vec<String>>; 3] = det.clone().map(|x| {
-                            x.parse::<f64>().map_err(|_| {
-                                if x.is_empty() {
-                                    vec!["All determination point values must be entered"
-                                        .to_string()]
-                                } else {
-                                    vec!["You must enter a valid number".to_string()]
-                                }
-                            })
-                        });
-                        if det_attempt.iter().all(|d| d.is_ok()) {
-                            Ok(det_attempt.map(|d| d.ok().unwrap()))
-                        } else {
-                            Err(det_attempt.map(|a| a.err().unwrap_or_default()))
-                        }
-                    })
-                    .collect::<Vec<_>>();
-
-            if parsed_rows.iter().all(|d| d.is_ok()) {
-                Ok(parsed_rows
-                    .into_iter()
-                    .map(|d| {
-                        let [static_pressure, cfm, brake_horsepower] = d.ok().unwrap();
-                        A1Standard2010Determination {
-                            static_pressure,
-                            cfm,
-                            brake_horsepower,
-                        }
-                    })
-                    .collect())
-            } else {
-                Err(parsed_rows
-                    .into_iter()
-                    .map(|row| row.err().unwrap_or_default())
-                    .collect::<Vec<_>>())
             }
-        };
+            Err(_) => {
+                if entered_rpm.is_empty() {
+                    Err(vec!["You must enter a fan RPM for the test".to_string()])
+                } else {
+                    Err(vec!["You must enter a valid number".to_string()])
+                }
+            }
+        },
+        entered_rpm_state.deref().clone(),
+    );
 
-        let parses = (parsed_fan_size_id, parsed_rpm, parsed_determinations);
-        if let (Ok(fan_size_id), Ok(fan_rpm), Ok(determinations)) = parses {
-            let id: String = report_id_state.to_string();
-            Ok(UpdateBody {
-                id,
-                determinations,
-                fan_rpm,
-                fan_size_id,
-            })
-        } else {
-            Err(UpdateBodyErrors {
-                size_errs: parses.0.err().unwrap_or_default(),
-                rpm_errs: parses.1.err().unwrap_or_default(),
-                determination_errs: parses.2.err().unwrap_or_default(),
-            })
-        }
-    })();
+    let parsed_rpm_errs_rc = use_memo(
+        |parsed_rpm| match parsed_rpm.as_ref() {
+            Ok(_) => Vec::new(),
+            Err(errs) => errs.clone(),
+        },
+        Rc::clone(&parsed_rpm),
+    );
+
+    let parsed_determinations: Rc<DeterminationsParse> =
+        use_memo(parse_determenations, determinations_state.deref().clone());
+
+    let fan_size_errs_rc = use_memo(
+        |parsed_fan_size_id| match (*parsed_fan_size_id).as_ref() {
+            Ok(_) => Vec::new(),
+            Err(errs) => errs.clone(),
+        },
+        Rc::clone(&parsed_fan_size_id),
+    );
+
+    let parsed_update_body: Rc<Result<UpdateBody, UpdateBodyErrors>> = use_memo(
+        |(parsed_fan_size_id, parsed_rpm, parsed_determinations)| {
+            let parses = (
+                parsed_fan_size_id.as_ref(),
+                (parsed_rpm.as_ref()),
+                (parsed_determinations.as_ref()),
+            );
+            if let (Ok(fan_size_id), Ok(fan_rpm), Ok(determinations)) = parses {
+                let id: String = report_id_state.to_string();
+                Ok(UpdateBody {
+                    id,
+                    determinations: determinations.clone(),
+                    fan_rpm: *fan_rpm,
+                    fan_size_id: fan_size_id.clone(),
+                })
+            } else {
+                Err(UpdateBodyErrors {
+                    size_errs: parsed_fan_size_id
+                        .as_ref()
+                        .clone()
+                        .err()
+                        .unwrap_or_default(),
+                    rpm_errs: parsed_rpm.as_ref().clone().err().unwrap_or_default(),
+                    determination_errs: parsed_determinations
+                        .as_ref()
+                        .clone()
+                        .err()
+                        .unwrap_or_default(),
+                })
+            }
+        },
+        (
+            Rc::clone(&parsed_fan_size_id),
+            Rc::clone(&parsed_rpm),
+            Rc::clone(&parsed_determinations),
+        ),
+    );
 
     let maybe_report: Option<A1Standard2010Report<FanSize<FanSeries<()>>>> =
         use_app_store_selector_with_deps(select_a1_report, report_id.clone());
+
     use_effect_with_deps(
         {
             let api_dispatch = api_dispatch.clone();
@@ -199,16 +196,14 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
     let handle_save_callback = {
         use_callback(
             |_evt: MouseEvent, (dispatch, parsed_update_body_ref)| {
-                if let Ok(update_body) = parsed_update_body_ref {
+                if let Ok(update_body) = (*parsed_update_body_ref).as_ref().clone() {
                     dispatch.apply(ApiRequestAction::Get(
                         GetParameters { ignore_cache: true },
-                        Gettable::PutA12010Report {
-                            body: update_body.clone(),
-                        },
+                        Gettable::PutA12010Report { body: update_body },
                     ))
                 }
             },
-            (api_dispatch, parsed_update_body.clone()),
+            (api_dispatch, Rc::clone(&parsed_update_body)),
         )
     };
 
@@ -266,16 +261,32 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         Some(report) => (html! {<h1>{"Test No. "}{ report.id.to_owned() }</h1>}, None),
     };
 
-    let det_errs = parsed_update_body
-        .clone()
-        .err()
-        .map(|e| e.determination_errs)
-        .unwrap_or_default();
+    let det_errs = use_memo(
+        |parsed_determinations| {
+            parsed_determinations
+                .as_ref()
+                .clone()
+                .err()
+                .unwrap_or_default()
+        },
+        Rc::clone(&parsed_determinations),
+    );
 
-    let maybe_points_to_render = parsed_update_body
-        .clone()
-        .map(|u| Some(u.determinations))
-        .unwrap_or(maybe_report.map(|r| r.determinations));
+    let maybe_points_to_render = use_memo(
+        |parsed_update_body| {
+            parsed_update_body
+                .as_ref()
+                .clone()
+                .map(|u| Some(u.determinations))
+                .unwrap_or(maybe_report.map(|r| r.determinations))
+        },
+        Rc::clone(&parsed_update_body),
+    );
+
+    let plot_html = match maybe_points_to_render.as_ref() {
+        Some(fc) => html! { <A1FanPlot points={fc.clone()} /> },
+        None => html! { <p>{"Once you enter a complete fan curve, you'll see it here"}</p> },
+    };
 
     html! {
         <>
@@ -286,14 +297,14 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
                     <div style="display: grid; grid-template-columns: auto auto; width: fit-content; column-gap: 8px; row-gap: 4px;">
                         {maybe_test_id_input}
                         <FanSeriesAndSizePicker
-                            size_errs={parsed_update_body.clone().err().map(|e| e.size_errs).unwrap_or_default()}
+                            size_errs={fan_size_errs_rc}
                             {saved_size}
                             {picked_fan_series_state}
                             {picked_fan_size_state}
                         />
                         <label>{"Test RPM"}</label>
                         <TaggedInput<()>
-                            errs={parsed_update_body.clone().err().map(|e| e.rpm_errs).unwrap_or_default()}
+                            errs={parsed_rpm_errs_rc}
                             value={(*entered_rpm_state).clone()}
                             tag={()}
                             onchange={on_rpm_input_change}
@@ -320,12 +331,56 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
                     onclick={handle_save_callback}>{"Save"}</button>
                 </form>
                 <div style="flex-grow: 1">
-                    { maybe_points_to_render
-                        .map(|fc| html!{ <A1FanPlot points={fc} /> })
-                        .unwrap_or(html! { <p>{"Once you enter a complete fan curve, you'll see it here"}</p> }) 
-                    }
+                    {plot_html}
                 </div>
             </div>
         </>
+    }
+}
+
+type DeterminationValueErr = Rc<Vec<String>>;
+type DeterminationRowErr = [DeterminationValueErr; 3];
+type DeterminationsParseErr = Vec<DeterminationRowErr>;
+type DeterminationsParse = Result<Vec<A1Standard2010Determination>, DeterminationsParseErr>;
+
+fn parse_determenations(determinations_state: &Vec<[String; 3]>) -> DeterminationsParse {
+    let parsed_rows: Vec<Result<[f64; 3], [DeterminationValueErr; 3]>> = determinations_state
+        .deref()
+        .iter()
+        .map(|det| {
+            let det_attempt: [Result<f64, Rc<Vec<String>>>; 3] = det.clone().map(|x| {
+                x.parse::<f64>().map_err(|_| {
+                    Rc::new(if x.is_empty() {
+                        vec!["All determination point values must be entered".to_string()]
+                    } else {
+                        vec!["You must enter a valid number".to_string()]
+                    })
+                })
+            });
+            if det_attempt.iter().all(|d| d.is_ok()) {
+                Ok(det_attempt.map(|d| d.ok().unwrap()))
+            } else {
+                Err(det_attempt.map(|a| a.err().unwrap_or_default()))
+            }
+        })
+        .collect::<Vec<_>>();
+
+    if parsed_rows.iter().all(|d| d.is_ok()) {
+        Ok(parsed_rows
+            .into_iter()
+            .map(|d| {
+                let [static_pressure, cfm, brake_horsepower] = d.ok().unwrap();
+                A1Standard2010Determination {
+                    static_pressure,
+                    cfm,
+                    brake_horsepower,
+                }
+            })
+            .collect())
+    } else {
+        Err(parsed_rows
+            .into_iter()
+            .map(|row| row.err().unwrap_or_default())
+            .collect::<Vec<_>>())
     }
 }
