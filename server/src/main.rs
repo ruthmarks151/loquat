@@ -118,6 +118,12 @@ async fn axum(
             "/api/a1_2010_report",
             post(controllers::a1_2010_report::post),
         )
+        .route("/api/sessions", post(controllers::sessions::post))
+        .route_service(
+            "/login",
+            get_service(ServeFile::new(static_folder.join("static/login.html")))
+                .handle_error(handle_error),
+        )
         .fallback_service(serve_dir)
         .layer(Extension(pool));
     Ok(router.into())

@@ -1,8 +1,7 @@
 use yew::prelude::*;
 
-
 use crate::features::a1_2010_report::components::{A1FanPlot, A1Form};
-use crate::features::a1_2010_report::hooks::{A1FormHookRes, use_a1_form_controller};
+use crate::features::a1_2010_report::hooks::{use_a1_form_controller, A1FormHookRes};
 
 #[derive(Properties, PartialEq)]
 pub struct EditA1PageProps {
@@ -17,9 +16,8 @@ pub fn EditA1Page(props: &EditA1PageProps) -> Html {
         on_valid_entry,
         maybe_report,
         maybe_points_to_render,
-        on_submit_click
+        on_submit_click,
     } = use_a1_form_controller(Some(report_id.clone()));
-
 
     let plot_html = match maybe_points_to_render.as_ref() {
         Some(fc) => html! { <A1FanPlot points={fc.clone()} /> },

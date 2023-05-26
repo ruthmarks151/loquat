@@ -11,14 +11,14 @@ use loquat_common::models::{
 
 use crate::common::components::determination_table::TaggedInput;
 use crate::common::components::{DeterminationsPasteTextArea, FanSeriesAndSizePicker};
-use crate::features::a1_2010_report::components::{A12010DeterminationTable};
+use crate::features::a1_2010_report::components::A12010DeterminationTable;
 
 #[derive(Debug, Properties, PartialEq)]
 pub struct A1FormProps {
     pub report_id: Option<AttrValue>,
     pub maybe_report: Option<A1Standard2010Report<FanSize<FanSeries<()>>>>,
     pub on_valid_entry: Callback<UpdateBody>,
-    pub on_submit_click: Callback<MouseEvent>
+    pub on_submit_click: Callback<MouseEvent>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -27,7 +27,6 @@ struct UpdateBodyErrors {
     rpm_errs: Vec<String>,
     determination_errs: Vec<[Rc<Vec<String>>; 3]>,
 }
-
 
 #[function_component]
 pub fn A1Form(
@@ -223,12 +222,7 @@ pub fn A1Form(
     });
 
     let det_errs = use_memo(
-        |parsed_determinations| {
-            (**parsed_determinations)
-                .clone()
-                .err()
-                .unwrap_or_default()
-        },
+        |parsed_determinations| (**parsed_determinations).clone().err().unwrap_or_default(),
         Rc::clone(&parsed_determinations),
     );
 
@@ -281,8 +275,9 @@ pub fn A1Form(
     }
 }
 
-
-fn parse_determenations(determinations_state: &Vec<[String; 3]>) -> Result<Vec<A1Standard2010Determination>, Vec<[Rc<Vec<String>>; 3]>> {
+fn parse_determenations(
+    determinations_state: &Vec<[String; 3]>,
+) -> Result<Vec<A1Standard2010Determination>, Vec<[Rc<Vec<String>>; 3]>> {
     let parsed_rows: Vec<Result<[f64; 3], [Rc<Vec<String>>; 3]>> = determinations_state
         .deref()
         .iter()

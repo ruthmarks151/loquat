@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="shortcut icon"type="image/x-icon" href="data:image/x-icon;,">
+    <script src="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.js"></script>
+    <link type="text/css" rel="stylesheet" href="https://www.gstatic.com/firebasejs/ui/6.0.1/firebase-ui-auth.css" />
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <script type="module">
+    // import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    // import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-analytics.js";
+    // import { getAuth } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js'
+
+    // TODO: Add SDKs for Firebase products that you want to use
+    // https://firebase.google.com/docs/web/setup#available-libraries
+
+    // Your web app's Firebase configuration
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+      apiKey: "AIzaSyAzd3-7CCdlFM_JZta1kS_jbG4m9mvvC7k",
+      authDomain: "loquat-7a013.firebaseapp.com",
+      projectId: "loquat-7a013",
+      storageBucket: "loquat-7a013.appspot.com",
+      messagingSenderId: "178325886463",
+      appId: "1:178325886463:web:d894491f639f7fe80203ca",
+      measurementId: "G-LCY87SZK6K"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // const analytics = getAnalytics(app);
+    // const auth = getAuth(app);
+                function setCookie(cname, cvalue, exdays) {
+                  const d = new Date();
+                  d.setTime(d.getTime() + (exdays*24*60*60*1000));
+                  let expires = "expires="+ d.toUTCString();
+                  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+                }
+    // Initialize the FirebaseUI Widget using Firebase.
+      var ui = new firebaseui.auth.AuthUI( 
+        // auth
+        firebase.auth()
+        );
+      ui.start('#firebaseui-auth-container', {
+
+        callbacks: {
+          signInSuccessWithAuthResult: function(authResult, redirectUrl) {
+            // User successfully signed in.
+            // Return type determines whether we continue the redirect automatically
+            // or whether we leave that to developer to handle.
+            try{
+            authResult.user.getIdToken()
+              .then((token) => {
+                setCookie("Authorization", `Bearer ${token}`, 30)
+                return fetch('/api/sessions', {
+                  method: 'POST',
+                  headers: {
+                      'Accept': 'application/json',
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${token}`
+                  },
+                  body: {}
+                })
+              }
+            ).then(async (auth_res) => { 
+              let json = await auth_res.json(); 
+              console.log("Auth Result:", json)
+
+              if (json && json.success && json.redirect) {
+                window.location.href = json.redirect
+              } else {
+                setCookie("Authorization", '', 0)
+                document.getElementById("outcome").innerHTML = json.message
+              }
+            })
+            } catch (e) {
+              document.getElementById("outcome").innerHTML = String(e)
+            }
+            //
+            return false;
+          },
+          uiShown: function() {
+            // The widget is rendered.
+            // Hide the loader.
+          }
+        },
+        // Will use popup for IDP Providers sign-in flow instead of the default, redirect.
+        signInFlow: 'popup',
+        signInSuccessUrl: '/',
+
+        signInOptions: [
+          firebase.auth.EmailAuthProvider.PROVIDER_ID,
+          firebase.auth.GoogleAuthProvider.PROVIDER_ID,
+        ],
+        // Terms of service url.
+        tosUrl: 'no-tos.com',
+        // Privacy policy url.
+        privacyPolicyUrl: 'no-pp.com'
+      });
+    </script>
+    <title>Loquat Login</title>
+    <base href="/"/>
+  </head>
+  <body>
+    <h1>Login</h1>
+    <h2 id="outcome"></h2>
+    <div id="firebaseui-auth-container"> </div>  
+  </body>
+</html>

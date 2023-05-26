@@ -12,7 +12,7 @@ use loquat_admin_web::{
 
 fn switch(routes: Route) -> Html {
     match routes {
-        Route::Home => html! { <h1>{ "Hello Frontend" }</h1> },
+        Route::Home => html! { <h1>{ "Loquat Fan Manager" }</h1> },
         Route::IndexFanSerieses => html! { <IndexFanSeriesPage /> },
         Route::GetFanSeries { id } => html! { <ReadFanSeriesPage id={id} /> },
         Route::GetFanSize { id } => html! { <ReadFanSizePage id={id} /> },
