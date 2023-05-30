@@ -92,7 +92,7 @@ pub fn IndexFanSeriesPage() -> Html {
             if fan_serieses.is_empty() {
                 html! {
                     <div>
-                    <h1>{"Fan List"} {format!("Fetched {:#?} ago", (Instant::now() - (*fetched_at )))}</h1>
+                    <h1>{"Fan List"}</h1>
 
                     {"No Serieses!"}
                     </div>
@@ -100,7 +100,13 @@ pub fn IndexFanSeriesPage() -> Html {
             } else {
                 html! {
                     <div>
-                        <h1>{"Fan List"} {format!("Fetched {:#?} ago", (Instant::now() - (*fetched_at )))}</h1>
+                        <h1>
+                        {"Fan Series"}
+                        <Link<Route> to={Route::NewFanSeriesPage}>
+                            {'\u{2002}'} // En-space
+                            {"New"}
+                        </Link<Route>>
+                        </h1>
                         <ul>
                             { fan_serieses.iter().map(|fan| html! {
                                 <li>

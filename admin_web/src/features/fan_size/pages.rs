@@ -48,16 +48,32 @@ pub mod read {
             }
             Some(fan_size) => {
                 html! { <div>
-                    <h1>{ fan_size.id.to_owned() }</h1>
-                    <h2>
-                        {"Diameter: "} {fan_size.diameter}
-                        {"Fan Type: "} {fan_size.fan_series.fan_type.clone() }
-                    </h2>
-                    <Link<Route> to={Route::GetFanSeries { id: fan_size.fan_series_id.clone() }}>
-                        <h2>
-                            {"Series: "} {fan_size.fan_series_id.clone()}
-                        </h2>
-                    </Link<Route>>
+                    <h1>
+                        <Link<Route> to={Route::GetFanSeries { id: fan_size.fan_series_id.clone() }}>
+                            {'\u{2b05}'} // Fat Left Arrow
+                            {'\u{2002}'} // en-space
+                        </Link<Route>>
+                        { fan_size.id.to_owned() }
+                    </h1>
+                    <table>
+                        <tr>
+                            <td>{"Diameter: "}</td>
+                            <td> {fan_size.diameter}</td>
+                        </tr>
+                        <tr>
+                            <td>{"Fan Type: "}</td>
+                            <td>{fan_size.fan_series.fan_type.clone() }</td>
+                        </tr>
+                        <tr>
+                            <td>{"Series: "}</td>
+                            <td>
+                                <Link<Route> to={Route::GetFanSeries { id: fan_size.fan_series_id.clone() }}>
+                                    {fan_size.fan_series_id.clone()}
+                                </Link<Route>>
+                            </td>
+                        </tr>
+                    </table>
+                    
                     </div>
                 }
             }

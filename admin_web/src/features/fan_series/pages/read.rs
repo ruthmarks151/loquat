@@ -23,7 +23,7 @@ pub fn ReadFanSeriesPage(props: &ReadFanSeriesPageProps) -> Html {
 
     let format_id = id.replace("%20", " ");
     let fan_series_option: Rc<Option<FanSeries<Vec<FanSize<()>>>>> =
-        use_app_store_selector_with_deps(select_fan_series_by_id, format_id.clone());
+        use_app_store_selector_with_deps(select_fan_series_by_id, Some(format_id.clone()));
 
     use_effect_with_deps(
         move |_| {
@@ -47,19 +47,51 @@ pub fn ReadFanSeriesPage(props: &ReadFanSeriesPageProps) -> Html {
         Some(data) => {
             html! {
                 <div>
-                    <h1>{"Fan Size Detail"}</h1>
-                    {"fan_type: "} {data.fan_type.to_string()} <br/>
-                    {"id: "} {data.id.to_owned()}
-                    <h2>{"Sizes"}</h2>
-                    <ul>
-                        { data.fan_sizes.iter().map(|fan_size| html! {
-                            <li>
-                                <Link<Route> to={Route::GetFanSize { id: fan_size.id.clone() }}>
-                                    {fan_size.id.clone()}{" Diameter: "}{fan_size.diameter}
-                                </Link<Route>>
-                            </li>
-                          } ).collect::<Vec<_>>() }
-                    </ul>
+                    <h1>
+                        <Link<Route> to={Route::IndexFanSerieses}>
+                            {'\u{2b05}'} // Fat arrow
+                            {'\u{2002}'} // en-space
+                        </Link<Route>>
+                        {"Fan Series Detail"}
+                        <Link<Route> to={Route::EditFanSeries { id: id.to_string() }}>
+                            {'\u{2002}'} // En-space
+                            {"Edit"}
+                        </Link<Route>>
+                    </h1>
+                    <table>
+                        <tr>
+                            <td>
+                                {"id: "}
+                            </td>
+                            <td>
+                                {data.id.to_owned()}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                {"Fan Type: "}
+                            </td>
+                            <td>
+                                {data.fan_type.to_string()}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                {"Sizes"}
+                            </td>
+                            <td>
+                            <ul style="margin: 0; padding-inline-start: 1.25em;">
+                                { data.fan_sizes.iter().map(|fan_size| html! {
+                                    <li>
+                                        <Link<Route> to={Route::GetFanSize { id: fan_size.id.clone() }}>
+                                            {fan_size.id.clone()}{" Diameter: "}{fan_size.diameter}
+                                        </Link<Route>>
+                                    </li>
+                                } ).collect::<Html>() }
+                        </ul>
+                            </td>
+                        </tr>
+                    </table>                    
                 </div>
             }
         }

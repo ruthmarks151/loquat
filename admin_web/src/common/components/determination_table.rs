@@ -101,6 +101,8 @@ pub struct TaggedInputProps<T: Clone + Eq + 'static> {
     pub value: String,
     pub tag: T,
     pub onchange: Callback<(T, String), ()>,
+    #[prop_or(false)]
+    pub disabled: bool,
 }
 
 #[function_component]
@@ -110,6 +112,7 @@ pub fn TaggedInput<T: Clone + Eq + 'static>(
         value,
         tag,
         onchange,
+        disabled,
     }: &TaggedInputProps<T>,
 ) -> Html {
     let input_ref = use_node_ref();
@@ -142,7 +145,13 @@ pub fn TaggedInput<T: Clone + Eq + 'static>(
 
     html! {
         <>
-            <input {style} ref={input_ref} value={value.clone()} onblur={onblur.clone()} />
+            <input
+                {style}
+                ref={input_ref}
+                disabled={*disabled}
+                value={value.clone()}
+                onblur={onblur.clone()}
+            />
         </>
     }
 }

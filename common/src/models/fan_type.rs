@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum FanType {
     #[serde(rename = "centrifugal")]
     Centrifugal,
@@ -10,6 +10,12 @@ pub enum FanType {
     MixedFlow,
     #[serde(rename = "axial")]
     Axial,
+}
+
+impl FanType {
+    pub fn all_options() -> Vec<Self> {
+        vec![Self::Centrifugal, Self::MixedFlow, Self::Axial]
+    }
 }
 
 #[derive(Debug, PartialEq, Eq)]

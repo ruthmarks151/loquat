@@ -237,6 +237,7 @@ pub fn A1Form(
                             value={(*report_id_state).clone()}
                             tag={()}
                             onchange={on_report_id_change}
+                            disabled={report_id.is_some()}
                         />
                         <FanSeriesAndSizePicker
                             size_errs={fan_size_errs_rc}
@@ -268,9 +269,9 @@ pub fn A1Form(
                             "(in. wg) (in. wg) (in. wg) (cfm) (hp) - (%) (%)"
                         ]}
                     />
-                    <button
-                    //disabled={parsed_update_body.clone().is_err()}
-                    onclick={on_submit_click}>{"Save"}</button>
+                    <button onclick={on_submit_click}>
+                        {"Save"}
+                    </button>
                 </form>
 
     }

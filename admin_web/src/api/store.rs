@@ -78,6 +78,12 @@ pub enum Gettable {
     PostA12010Report {
         body: loquat_common::api::a1_2010_report::UpdateBody,
     },
+    PutFanSeriesReport {
+        body: loquat_common::api::fan_series::UpdateBody,
+    },
+    PostFanSeriesReport {
+        body: loquat_common::api::fan_series::UpdateBody,
+    },
 }
 
 impl Reducer<Store> for ApiRequestAction {
@@ -125,6 +131,16 @@ impl Reducer<Store> for ApiRequestAction {
                         gettable,
                         a1_report::post(body),
                         ApiResponseAction::RecieveA1Report,
+                    ),
+                    Gettable::PutFanSeriesReport { body }  => handle_dispatches(
+                        gettable,
+                        fan_series::put(body),
+                        ApiResponseAction::RecieveFanSeries,
+                    ),
+                    Gettable::PostFanSeriesReport { body }  => handle_dispatches(
+                        gettable,
+                        fan_series::post(body),
+                        ApiResponseAction::RecieveFanSeries,
                     ),
                 }
             }

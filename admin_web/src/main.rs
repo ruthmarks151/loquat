@@ -5,7 +5,7 @@ use loquat_admin_web::{
     features::fan_series::pages::{IndexFanSeriesPage, ReadFanSeriesPage},
     features::{
         a1_2010_report::pages::{EditA1Page, NewA1Page},
-        fan_size::pages::ReadFanSizePage,
+        fan_size::pages::ReadFanSizePage, fan_series::pages::{NewFanSeriesPage, EditFanSeriesPage},
     },
     route::Route,
 };
@@ -14,7 +14,9 @@ fn switch(routes: Route) -> Html {
     match routes {
         Route::Home => html! { <h1>{ "Loquat Fan Manager" }</h1> },
         Route::IndexFanSerieses => html! { <IndexFanSeriesPage /> },
+        Route::NewFanSeriesPage => html! { <NewFanSeriesPage /> },
         Route::GetFanSeries { id } => html! { <ReadFanSeriesPage id={id} /> },
+        Route::EditFanSeries { id } => html! { <EditFanSeriesPage id={id} /> },
         Route::GetFanSize { id } => html! { <ReadFanSizePage id={id} /> },
         Route::EditA1Report { id } => html! { <EditA1Page id={id} /> },
         Route::NewA1Report => html! { <NewA1Page /> },

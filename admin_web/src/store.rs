@@ -58,17 +58,21 @@ where
 
 pub fn select_fan_series_by_id(
     state: &AppStore,
-    id: &String,
+    maybe_id: &Option<String>,
 ) -> Option<FanSeries<Vec<FanSize<()>>>> {
-    let fan_series: FanSeries<()> = state.fan_series.fan_serieses.get(id)?.clone();
-    let fan_sizes: Vec<FanSize<()>> = state
-        .fan_size
-        .fan_sizes
-        .clone()
-        .into_values()
-        .filter(|fs| fs.fan_series_id == *id)
-        .collect();
-    Some((fan_series, fan_sizes).into())
+    if let Some(id) = maybe_id {
+        let fan_series: FanSeries<()> = state.fan_series.fan_serieses.get(id)?.clone();
+        let fan_sizes: Vec<FanSize<()>> = state
+            .fan_size
+            .fan_sizes
+            .clone()
+            .into_values()
+            .filter(|fs| fs.fan_series_id == *id)
+            .collect();
+        Some((fan_series, fan_sizes).into())
+    } else {
+        None
+    }
 }
 
 pub fn select_fan_size_by_id(state: &AppStore, id: &String) -> Option<FanSize<FanSeries<()>>> {
