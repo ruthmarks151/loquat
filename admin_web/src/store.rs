@@ -1,17 +1,18 @@
-use std::borrow::Borrow;
+use std::rc::Rc;
 
 use loquat_common::models::{A1Standard2010Report, FanSeries, FanSize};
+use yew::use_memo;
 use yewdux::prelude::{use_store, Dispatch};
 
 use crate::api::store::ApiResponseAction;
 
 #[derive(Debug, Clone, PartialEq)]
 
-pub struct AppStore<'a> {
-    api: &'a crate::api::store::Store,
-    a1_report: &'a crate::features::a1_2010_report::Store,
-    fan_series: &'a crate::features::fan_series::Store,
-    fan_size: &'a crate::features::fan_size::Store,
+pub struct AppStore {
+    api: Rc<crate::api::store::Store>,
+    a1_report: Rc<crate::features::a1_2010_report::Store>,
+    fan_series: Rc<crate::features::fan_series::Store>,
+    fan_size: Rc<crate::features::fan_size::Store>,
 }
 
 pub fn app_dispatch(action: ApiResponseAction) {
@@ -27,26 +28,28 @@ pub fn app_dispatch(action: ApiResponseAction) {
 }
 
 #[yew::hook]
-pub fn use_app_store_selector_with_deps<Func, Deps, Resp>(func: Func, deps: Deps) -> Resp
+pub fn use_app_store_selector_with_deps<Func, Deps, Resp>(func: Func, deps: Deps) -> Rc<Resp>
 where
     Func: Fn(&AppStore, &Deps) -> Resp,
+    Deps: PartialEq + 'static,
+    Resp: 'static,
 {
     let (api_store, _) = use_store::<crate::api::store::Store>();
     let (a1_store, _) = use_store::<crate::features::a1_2010_report::Store>();
-
     let (fan_series, _) = use_store::<crate::features::fan_series::Store>();
     let (fan_size, _) = use_store::<crate::features::fan_size::Store>();
+
     let store = AppStore {
-        api: api_store.borrow(),
-        a1_report: a1_store.borrow(),
-        fan_series: fan_series.borrow(),
-        fan_size: fan_size.borrow(),
+        api: Rc::clone(&api_store),
+        a1_report: Rc::clone(&a1_store),
+        fan_series: Rc::clone(&fan_series),
+        fan_size: Rc::clone(&fan_size),
     };
-    func(&store, &deps)
+    use_memo(|(store, deps)| func(store, deps), (store, deps))
 }
 
 #[yew::hook]
-pub fn use_app_store_selector<Func, Resp>(func: Func) -> Resp
+pub fn use_app_store_selector<Func, Resp: 'static>(func: Func) -> Rc<Resp>
 where
     Func: Fn(&AppStore) -> Resp,
 {

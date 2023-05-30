@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::api::store::{RequestStatuses, Store as ApiStore};
 use instant::Instant;
 
@@ -16,7 +18,7 @@ use crate::{
 pub fn IndexFanSeriesPage() -> Html {
     let gettable = Gettable::FanSeriesesIndex;
     let (_state, dispatch) = use_store::<ApiStore>();
-    let fan_serieses: Vec<FanSeries<()>> = use_app_store_selector(select_all_fan_series);
+    let fan_serieses: Rc<Vec<FanSeries<()>>> = use_app_store_selector(select_all_fan_series);
     let request_status = use_selector_with_deps(
         |store: &ApiStore, dep_gettable| {
             store

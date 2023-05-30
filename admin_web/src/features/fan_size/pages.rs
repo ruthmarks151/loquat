@@ -1,4 +1,6 @@
 pub mod read {
+    use std::rc::Rc;
+
     use loquat_common::models::{FanSeries, FanSize};
     use yew::prelude::*;
     use yew_router::prelude::Link;
@@ -22,7 +24,7 @@ pub mod read {
         let id = props.id.clone();
 
         let format_id = id.replace("%20", " ");
-        let fan_size_option: Option<FanSize<FanSeries<()>>> =
+        let fan_size_option: Rc<Option<FanSize<FanSeries<()>>>> =
             use_app_store_selector_with_deps(select_fan_size_by_id, format_id.clone());
 
         use_effect_with_deps(
@@ -38,7 +40,7 @@ pub mod read {
             (),
         );
 
-        match fan_size_option {
+        match fan_size_option.as_ref() {
             None => {
                 html! {
                     <div>{"No server response"}</div>

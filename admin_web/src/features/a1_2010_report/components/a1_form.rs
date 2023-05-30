@@ -16,7 +16,8 @@ use crate::features::a1_2010_report::components::A12010DeterminationTable;
 #[derive(Debug, Properties, PartialEq)]
 pub struct A1FormProps {
     pub report_id: Option<AttrValue>,
-    pub maybe_report: Option<A1Standard2010Report<FanSize<FanSeries<()>>>>,
+    #[prop_or_else(|| Rc::new(None))]
+    pub maybe_report: Rc<Option<A1Standard2010Report<FanSize<FanSeries<()>>>>>,
     pub on_valid_entry: Callback<UpdateBody>,
     pub on_submit_click: Callback<MouseEvent>,
 }
@@ -181,7 +182,7 @@ pub fn A1Form(
                 }
             }
         },
-        maybe_report.clone(),
+        maybe_report.as_ref().clone(),
     );
 
     let on_report_id_change = {
@@ -216,8 +217,8 @@ pub fn A1Form(
         )
     };
 
-    let saved_size = maybe_report.as_ref().map(|report| {
-        let (fan_size, _fan_series): (FanSize<()>, FanSeries<()>) = report.fan_size.clone().into();
+    let saved_size = maybe_report.as_ref().clone().map(|report| {
+        let (fan_size, _fan_series): (FanSize<()>, FanSeries<()>) = report.fan_size.into();
         fan_size
     });
 
@@ -274,11 +275,11 @@ pub fn A1Form(
 
     }
 }
-
+type DeterminationErrors = [Rc<Vec<String>>; 3];
 fn parse_determenations(
     determinations_state: &Vec<[String; 3]>,
-) -> Result<Vec<A1Standard2010Determination>, Vec<[Rc<Vec<String>>; 3]>> {
-    let parsed_rows: Vec<Result<[f64; 3], [Rc<Vec<String>>; 3]>> = determinations_state
+) -> Result<Vec<A1Standard2010Determination>, Vec<DeterminationErrors>> {
+    let parsed_rows: Vec<Result<[f64; 3], DeterminationErrors>> = determinations_state
         .deref()
         .iter()
         .map(|det| {

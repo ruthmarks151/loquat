@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use crate::api::store::Store as ApiStore;
 use crate::{
     api::store::{ApiRequestAction, GetParameters, Gettable},
@@ -20,7 +22,7 @@ pub fn ReadFanSeriesPage(props: &ReadFanSeriesPageProps) -> Html {
     let id = props.id.clone();
 
     let format_id = id.replace("%20", " ");
-    let fan_series_option: Option<FanSeries<Vec<FanSize<()>>>> =
+    let fan_series_option: Rc<Option<FanSeries<Vec<FanSize<()>>>>> =
         use_app_store_selector_with_deps(select_fan_series_by_id, format_id.clone());
 
     use_effect_with_deps(
@@ -36,7 +38,7 @@ pub fn ReadFanSeriesPage(props: &ReadFanSeriesPageProps) -> Html {
         (),
     );
 
-    match fan_series_option {
+    match fan_series_option.as_ref() {
         None => {
             html! {
                 <div>{"No server response"}</div>

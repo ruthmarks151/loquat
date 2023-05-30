@@ -17,7 +17,7 @@ use crate::store::{select_a1_report, use_app_store_selector_with_deps};
 
 pub struct A1FormHookRes {
     pub on_valid_entry: Callback<UpdateBody>,
-    pub maybe_report: Option<A1Standard2010Report<FanSize<FanSeries<()>>>>,
+    pub maybe_report: Rc<Option<A1Standard2010Report<FanSize<FanSeries<()>>>>>,
     pub maybe_points_to_render: Rc<Option<Vec<A1Standard2010Determination>>>,
     pub on_submit_click: Callback<MouseEvent>,
 }
@@ -28,7 +28,7 @@ pub fn use_a1_form_controller(maybe_report_id: Option<String>) -> A1FormHookRes 
 
     let last_valid_entry: UseStateHandle<Option<UpdateBody>> = use_state(|| None);
 
-    let maybe_report: Option<A1Standard2010Report<FanSize<FanSeries<()>>>> =
+    let maybe_report: Rc<Option<A1Standard2010Report<FanSize<FanSeries<()>>>>> =
         use_app_store_selector_with_deps(select_a1_report, maybe_report_id.clone());
 
     let on_valid_entry = {
@@ -40,9 +40,8 @@ pub fn use_a1_form_controller(maybe_report_id: Option<String>) -> A1FormHookRes 
         |parsed_update_body| {
             parsed_update_body
                 .as_ref()
-                .clone()
                 .map(|u| Some(u.clone().determinations))
-                .unwrap_or(maybe_report.clone().map(|r| r.determinations))
+                .unwrap_or(maybe_report.as_ref().clone().map(|r| r.determinations))
         },
         last_valid_entry.deref().clone(),
     );
@@ -65,7 +64,7 @@ pub fn use_a1_form_controller(maybe_report_id: Option<String>) -> A1FormHookRes 
 
     use_effect_with_deps(
         {
-            let api_dispatch = api_dispatch.clone();
+            // let api_dispatch = api_dispatch.clone();
             move |maybe_report_id: &Option<String>| {
                 if let Some(report_id) = maybe_report_id {
                     api_dispatch.apply(ApiRequestAction::Get(
@@ -80,7 +79,7 @@ pub fn use_a1_form_controller(maybe_report_id: Option<String>) -> A1FormHookRes 
                 || {}
             }
         },
-        maybe_report_id.clone(),
+        maybe_report_id,
     );
 
     A1FormHookRes {

@@ -1,8 +1,9 @@
 use axum::{
+    body::BoxBody,
     extract::{Extension, Json},
-    http::{Request, Uri},
+    http::Request,
     middleware::Next,
-    response::{IntoResponse, Redirect, Response}, body::BoxBody,
+    response::Response,
 };
 use axum_extra::extract::CookieJar;
 
@@ -53,8 +54,7 @@ pub async fn post(
 
     if AUTHORIZED_UIDS
         .iter()
-        .find(|authed_id| Some(authed_id.to_string()) == claimed_id)
-        .is_some()
+        .any(|authed_id| Some(authed_id.to_string()) == claimed_id)
     {
         Ok(Json(PostSessionResponse {
             success: true,
@@ -67,8 +67,7 @@ pub async fn post(
             message: format!(
                 "Authenticated successfully.<br>However, this account is not presently authorized.<br>Please ask for user ID '{}' to be authorized",
                 claimed_id.unwrap_or("None".to_string())
-            )
-            .to_string(),
+            ),
             redirect: None,
         }))
     }
@@ -79,17 +78,21 @@ pub async fn auth_middleware<B>(request: Request<B>, next: Next<B>) -> Response 
     let cookie_jar = CookieJar::from_headers(request.headers());
     let claimed_id = get_authed_user_id(&cookie_jar);
 
-    println!("Route: {}", request.uri().to_string());
+    println!("Route: {}", request.uri());
 
-    if request.uri().to_string() == "/static/login.html".to_string() || request.uri().to_string().starts_with("/api/sessions") {
+    if request.uri().query() == Some("/static/login.html")
+        || request.uri().to_string().starts_with("/api/sessions")
+    {
         next.run(request).await
     } else if AUTHORIZED_UIDS
         .iter()
-        .find(|authed_id| Some(authed_id.to_string()) == claimed_id)
-        .is_some()
+        .any(|authed_id| Some(authed_id.to_string()) == claimed_id)
     {
         next.run(request).await
     } else {
-        Response::builder().status(401).body(BoxBody::default()).unwrap()
+        Response::builder()
+            .status(401)
+            .body(BoxBody::default())
+            .unwrap()
     }
 }
