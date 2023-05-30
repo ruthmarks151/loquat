@@ -1,4 +1,9 @@
-use axum::extract::{Extension, Json};
+use axum::{
+    extract::{Extension, Json},
+    http::{Request, Uri},
+    middleware::Next,
+    response::{IntoResponse, Redirect, Response}, body::BoxBody,
+};
 use axum_extra::extract::CookieJar;
 
 use serde::{Deserialize, Serialize};
@@ -22,25 +27,33 @@ pub struct PostSessionResponse {
     redirect: Option<String>,
 }
 
-const AUTHORIZED_UIDS: [&str; 1] = ["eY9lIYhF4QTZHdz8VAHoyOeCm1S2"];
+const AUTHORIZED_UIDS: [&str; 2] = [
+    "eY9lIYhF4QTZHdz8VAHoyOeCm1S2", // RRM
+    "DYTCeA3RJNZpks2fQr2clWLKFE83", // JKJ
+];
+
+fn get_authed_user_id(cookie_jar: &CookieJar) -> Option<String> {
+    let authorization = cookie_jar.get("Authorization")?;
+    let authorization_token = authorization.value().strip_prefix("Bearer ")?;
+
+    // Algorithm::RS256
+    let unverified: Token<Header, Claims, _> = Token::parse_unverified(authorization_token)
+        .map_err(|err| err.to_string())
+        .ok()?;
+
+    let claims = unverified.claims();
+    Some(claims.sub.clone())
+}
 
 pub async fn post(
     Extension(_pool): Extension<PgPool>,
     cookie_jar: CookieJar, // Json(PostBody): Json<()>,
 ) -> Result<Json<PostSessionResponse>, String> {
-    let authorization = cookie_jar.get("Authorization").unwrap();
-    let authorization_token = authorization.value().strip_prefix("Bearer ").unwrap();
-
-    // Algorithm::RS256
-    let unverified: Token<Header, Claims, _> =
-        Token::parse_unverified(authorization_token).map_err(|err| err.to_string())?;
-
-    let claims = unverified.claims();
-    let claimed_id = claims.sub.clone();
+    let claimed_id = get_authed_user_id(&cookie_jar);
 
     if AUTHORIZED_UIDS
         .iter()
-        .find(|authed_id| **authed_id == claimed_id.as_str())
+        .find(|authed_id| Some(authed_id.to_string()) == claimed_id)
         .is_some()
     {
         Ok(Json(PostSessionResponse {
@@ -52,11 +65,31 @@ pub async fn post(
         Ok(Json(PostSessionResponse {
             success: false,
             message: format!(
-                "Authenticated successfully. However, this account is not presently authorized. Please ask for user ID '{}' to be authorized",
-                claimed_id
+                "Authenticated successfully.<br>However, this account is not presently authorized.<br>Please ask for user ID '{}' to be authorized",
+                claimed_id.unwrap_or("None".to_string())
             )
             .to_string(),
             redirect: None,
         }))
+    }
+}
+
+pub async fn auth_middleware<B>(request: Request<B>, next: Next<B>) -> Response {
+    // do something with `request`...
+    let cookie_jar = CookieJar::from_headers(request.headers());
+    let claimed_id = get_authed_user_id(&cookie_jar);
+
+    println!("Route: {}", request.uri().to_string());
+
+    if request.uri().to_string() == "/static/login.html".to_string() || request.uri().to_string().starts_with("/api/sessions") {
+        next.run(request).await
+    } else if AUTHORIZED_UIDS
+        .iter()
+        .find(|authed_id| Some(authed_id.to_string()) == claimed_id)
+        .is_some()
+    {
+        next.run(request).await
+    } else {
+        Response::builder().status(401).body(BoxBody::default()).unwrap()
     }
 }

@@ -159,7 +159,11 @@ fn handle_dispatches<Fut, Resp, ActionFactory>(
                     resp.status(),
                     resp.status_text()
                 );
-
+                if resp.status() == 401 {
+                    // not authed
+                    log::warn!("401 unauthorized, redirecting");
+                    web_sys::window().map(|w| w.location().set_pathname("/static/login.html"));
+                }
                 dispatch.reduce_mut(|s| {
                     s.get_status
                         .insert(gettable, RequestStatuses::Error(Instant::now(), err_msg));

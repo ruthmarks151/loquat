@@ -6,7 +6,7 @@ use axum::{
     routing::{get, get_service, post, put},
     Extension, Router,
 };
-use loquat_server::controllers;
+use loquat_server::controllers::{self, sessions::auth_middleware};
 use shuttle_secrets::SecretStore;
 use sqlx::{migrate::Migrator, PgPool};
 use tower_http::services::{ServeDir, ServeFile};
@@ -124,7 +124,8 @@ async fn axum(
             get_service(ServeFile::new(static_folder.join("static/login.html")))
                 .handle_error(handle_error),
         )
-        .fallback_service(serve_dir)
-        .layer(Extension(pool));
+        .layer(Extension(pool))
+        .layer(axum::middleware::from_fn(auth_middleware))
+        .fallback_service(serve_dir);
     Ok(router.into())
 }
